@@ -7,7 +7,7 @@ let myPlayerRef = null;
 let myPlayerId = null;
 let currentRoomListener = null;
 
-export function joinRemoteRoom(roomCode, playerData, onRoomUpdate) {
+export function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost = false) {
   myPlayerId = playerData.id;
 
   if (currentRoomRef && currentRoomListener) {
@@ -18,14 +18,21 @@ export function joinRemoteRoom(roomCode, playerData, onRoomUpdate) {
   myPlayerRef = ref(db, `rooms/${roomCode}/players/${playerData.id}`);
 
   onDisconnect(myPlayerRef).remove();
-  update(currentRoomRef, { status: { isPlaying: false, mapKey: 'dungeon' } });
+
+  if (isHost) {
+    set(currentRoomRef, {
+      status: { isPlaying: false, mapKey: 'dungeon' },
+      players: {}
+    });
+  }
+
   set(myPlayerRef, playerData);
 
   currentRoomListener = onValue(currentRoomRef, (snapshot) => {
-    const data = snapshot.val();
-    if (data && data.players) {
-      onRoomUpdate(data.players, data.status);
-    }
+    const data = snapshot.val() || {};
+    const players = data.players || {};
+    const status = data.status || { isPlaying: false, mapKey: 'dungeon' };
+    onRoomUpdate(players, status);
   });
 }
 

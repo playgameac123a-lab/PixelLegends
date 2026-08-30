@@ -212,7 +212,7 @@ function joinLobby(code, asHost) {
       handleRoomUpdate(playersData, peers);
       if (gameState === 'MENU') showLobbyUI();
     }
-  });
+  }, asHost);
 }
 
 function showLobbyUI() {
