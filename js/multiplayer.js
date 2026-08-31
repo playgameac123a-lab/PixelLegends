@@ -6,39 +6,52 @@ let currentRoomRef = null;
 let myPlayerRef = null;
 let myPlayerId = null;
 let currentRoomListener = null;
+let currentRoomStatus = { isPlaying: false, mapKey: 'dungeon', revivesRemaining: 1, partyExp: 0, partyGold: 0, drops: [], challengeFailed: false };
 
 export async function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost = false) {
   myPlayerId = playerData.id;
 
-  if (currentRoomRef && currentRoomListener) {
-    off(currentRoomRef, 'value', currentRoomListener);
-  }
-
-  currentRoomRef = ref(db, `rooms/${roomCode}`);
-  myPlayerRef = ref(db, `rooms/${roomCode}/players/${playerData.id}`);
-
-  const roomSnapshot = await get(currentRoomRef);
-
-  if (isHost) {
-    if (roomSnapshot.exists()) {
-      return { ok: false, reason: 'ROOM_EXISTS' };
+  try {
+    if (currentRoomRef && currentRoomListener) {
+      off(currentRoomRef, 'value', currentRoomListener);
     }
-    await set(currentRoomRef, { status: { isPlaying: false, mapKey: 'dungeon' }, players: {} });
-  } else if (!roomSnapshot.exists()) {
-    return { ok: false, reason: 'ROOM_NOT_FOUND' };
+
+    currentRoomRef = ref(db, `rooms/${roomCode}`);
+    myPlayerRef = ref(db, `rooms/${roomCode}/players/${playerData.id}`);
+
+    const roomSnapshot = await get(currentRoomRef);
+
+    if (isHost) {
+      if (roomSnapshot.exists()) {
+        return { ok: false, reason: 'ROOM_EXISTS' };
+      }
+      currentRoomStatus = { isPlaying: false, mapKey: 'dungeon', revivesRemaining: 1, partyExp: 0, partyGold: 0, drops: [], challengeFailed: false };
+      await set(currentRoomRef, { status: currentRoomStatus, players: {} });
+    } else if (!roomSnapshot.exists()) {
+      return { ok: false, reason: 'ROOM_NOT_FOUND' };
+    }
+
+    onDisconnect(myPlayerRef).remove();
+    await set(myPlayerRef, playerData);
+
+    currentRoomListener = onValue(currentRoomRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const players = data.players || {};
+      currentRoomStatus = data.status || { ...currentRoomStatus };
+      onRoomUpdate(players, currentRoomStatus);
+    });
+
+    return { ok: true, roomCode };
+  } catch (error) {
+    console.error('joinRemoteRoom failed:', error);
+    return { ok: false, reason: 'PERMISSION_DENIED', error };
   }
+}
 
-  onDisconnect(myPlayerRef).remove();
-  await set(myPlayerRef, playerData);
-
-  currentRoomListener = onValue(currentRoomRef, (snapshot) => {
-    const data = snapshot.val() || {};
-    const players = data.players || {};
-    const status = data.status || { isPlaying: false, mapKey: 'dungeon' };
-    onRoomUpdate(players, status);
-  });
-
-  return { ok: true, roomCode };
+export function updateRoomStatus(statusPatch) {
+  if (!currentRoomRef) return;
+  currentRoomStatus = { ...currentRoomStatus, ...statusPatch };
+  update(currentRoomRef, { status: currentRoomStatus });
 }
 
 export function handleRoomUpdate(playersData, localPeers) {

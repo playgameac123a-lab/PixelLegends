@@ -2,12 +2,13 @@ import { MAPS, HEROES, WEAPONS, PASSIVES, Talents, ACHIEVEMENTS, EVOLVED_WEAPONS
 import { initDarkPixelIcons, initSprites, drawMap, SpriteCanvasCache, initAudio, playSound, toggleAudio } from './engine.js';
 import { renderAllPixelIcons, showScreen, updateHpUI, updateExpUI, updateGoldUI, updateHUD, updateEquipmentHUD, renderCharSelectUI, updateHeroStage, renderMapSelectUI, renderTalentsUI, renderAchievementsUI, renderUpgradeOptions, renderLobbyCarousel } from './ui.js';
 import { initAuth, loginWithGoogle, saveCloudData, currentUser } from './auth.js';
-import { joinRemoteRoom, handleRoomUpdate, syncPlayerPosition, syncLobbyState, setRoomPlayingStatus, leaveRemoteRoom } from './multiplayer.js';
+import { joinRemoteRoom, handleRoomUpdate, syncPlayerPosition, syncLobbyState, setRoomPlayingStatus, leaveRemoteRoom, updateRoomStatus } from './multiplayer.js';
 
 let gameState = 'MENU', lastTime = performance.now();
 const camera = { x: 0, y: 0 };
 let player = {}, enemies = [], bullets = [], enemyProjectiles = [], gems = [], particles = [], floatingTexts = [], lightningStrikes = [], groundZones = [];
 let sessionGold = 120, totalKills = 0, killCount = 0, highestWave = 1, currentWave = 1, waveTimer = 40;
+let sharedPartyExp = 0, sharedPartyGold = 0, sharedRevivesRemaining = 1, sharedDrops = [], sharedChallengeFailed = false;
 let enemySpawnCounter = 0, hasEvolvedAny = false;
 let selectedHeroKey = 'knight', previewHeroKey = 'knight', selectedMapKey = 'dungeon';
 
@@ -194,6 +195,56 @@ function bindUIEvents() {
   };
 }
 
+function getPartySize() {
+  return isMultiplayer ? Math.max(1, Object.keys(lobbyPlayers || {}).length || 1) : 1;
+}
+
+function updatePartyReviveDisplay() {
+  const reviveEl = document.getElementById('partyReviveDisplay');
+  if (!reviveEl) return;
+  const value = isMultiplayer ? Math.max(0, sharedRevivesRemaining) : 0;
+  reviveEl.innerText = `復活：${value}`;
+  reviveEl.style.color = value > 0 ? '#facc15' : '#f87171';
+}
+
+function triggerPartyFailure() {
+  if (sharedChallengeFailed) return;
+  sharedChallengeFailed = true;
+  const endTitle = document.getElementById('endTitle');
+  const endDesc = document.getElementById('endDesc');
+  if (endTitle) endTitle.innerText = '挑戰失敗';
+  if (endDesc) endDesc.innerHTML = `隊伍共享復活次數已耗盡<br>所有玩家已返回主選單`;
+  showScreen('endModal');
+  setTimeout(() => {
+    sharedChallengeFailed = false;
+    showScreen('mainMenuScreen');
+    gameState = 'MENU';
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('minimapWrapper').style.display = 'none';
+    if (currentRoomCode) {
+      isMultiplayer = false; isRoomHost = false; isMyReady = false; currentRoomCode = '';
+      peers = {}; lobbyPlayers = {};
+      leaveRemoteRoom();
+    }
+  }, 1800);
+}
+
+function syncPartyRoomState(force = false) {
+  if (!isMultiplayer || !currentRoomCode) return;
+  const partySize = getPartySize();
+  const nextRevives = Math.max(0, force ? partySize : Number(sharedRevivesRemaining || partySize));
+  const payload = {
+    isPlaying: true,
+    mapKey: selectedMapKey,
+    revivesRemaining: nextRevives,
+    partyExp: Number(sharedPartyExp || player.exp || 0),
+    partyGold: Number(sharedPartyGold || sessionGold || 0),
+    drops: Array.isArray(sharedDrops) ? sharedDrops.slice(-60) : [],
+    challengeFailed: sharedChallengeFailed
+  };
+  updateRoomStatus(payload);
+}
+
 function joinLobby(code, asHost) {
   if(!code) return;
   initAudio(); currentRoomCode = code; isRoomHost = asHost; isMyReady = asHost;
@@ -204,6 +255,16 @@ function joinLobby(code, asHost) {
 
   joinRemoteRoom(code, localSelf, (playersData, status) => {
     lobbyPlayers = playersData || { [myPeerId]: localSelf };
+    if (status && typeof status.revivesRemaining === 'number') sharedRevivesRemaining = status.revivesRemaining;
+    if (status && typeof status.partyExp === 'number') sharedPartyExp = status.partyExp;
+    if (status && typeof status.partyGold === 'number') sharedPartyGold = status.partyGold;
+    if (status && Array.isArray(status.drops)) sharedDrops = status.drops;
+    if (status && typeof status.challengeFailed === 'boolean') sharedChallengeFailed = status.challengeFailed;
+    if (typeof sharedPartyGold === 'number') sessionGold = sharedPartyGold;
+    if (sharedChallengeFailed) {
+      triggerPartyFailure();
+      return;
+    }
     if (status && status.isPlaying && gameState !== 'PLAYING') {
       selectedMapKey = status.mapKey || 'dungeon';
       isMultiplayer = true;
@@ -212,15 +273,19 @@ function joinLobby(code, asHost) {
       handleRoomUpdate(playersData, peers);
       if (gameState === 'MENU') showLobbyUI();
     }
+    updatePartyReviveDisplay();
   }, asHost).then((result) => {
     if (!result || !result.ok) {
       if (result && result.reason === 'ROOM_NOT_FOUND') {
         alert('此房間代碼不存在，請確認代碼後再加入。');
-        showScreen('multiMatchScreen');
       } else if (result && result.reason === 'ROOM_EXISTS') {
         alert('此房間代碼已存在，請換另一個代碼。');
-        showScreen('multiMatchScreen');
+      } else if (result && result.reason === 'PERMISSION_DENIED') {
+        alert('Firebase 資料庫權限被拒絕，請在 Firebase Realtime Database 設定 allow read, write: true（測試模式）後再試一次。');
+      } else {
+        alert('加入房間失敗，請重試。');
       }
+      showScreen('multiMatchScreen');
       return;
     }
   }).catch((error) => {
@@ -301,7 +366,16 @@ function startGame() {
 
   Object.keys(WEAPONS).forEach(k => { WEAPONS[k].level = (k === hero.startingWeapon ? 1 : 0); WEAPONS[k].evolved = false; WEAPONS[k].timer = 0; });
   Object.keys(PASSIVES).forEach(k => PASSIVES[k].level = 0);
-  
+
+  if (isMultiplayer) {
+    sharedPartyExp = player.exp;
+    sharedPartyGold = sessionGold;
+    sharedRevivesRemaining = Math.max(1, getPartySize());
+    sharedDrops = [];
+    sharedChallengeFailed = false;
+    syncPartyRoomState(true);
+  }
+  updatePartyReviveDisplay();
   updateHpUI(player.hp, player.maxHp); updateExpUI(player.exp, player.expNeeded, player.level);
   updateGoldUI(sessionGold); updateEquipmentHUD(WEAPONS, PASSIVES);
   document.getElementById('heroBadge').innerText = hero.name.split(' ')[0];
@@ -333,14 +407,25 @@ function damageEnemy(e, dmg, color = '#fff') {
   if (e.hp <= 0 && !e.dead) {
     e.dead = true; killCount++; totalKills++;
     const goldBonus = (1 + Talents.greed.level * Talents.greed.value) * (1 + PASSIVES.greed_pass.level * 0.3);
-    if(Math.random() < 0.2) gems.push({ x: e.x + 10, y: e.y, type: 'coin', val: Math.round(5 * goldBonus) });
-    else gems.push({ x: e.x, y: e.y, type: 'gem', val: (e.type==='brute' || e.type==='lich') ? 4 : 1 });
+    const drop = Math.random() < 0.2 ? { x: e.x + 10, y: e.y, type: 'coin', val: Math.round(5 * goldBonus) } : { x: e.x, y: e.y, type: 'gem', val: (e.type==='brute' || e.type==='lich') ? 4 : 1 };
+    gems.push({ ...drop, id: `${Date.now()}-${Math.random()}` });
+    if (isMultiplayer) {
+      sharedDrops = [...sharedDrops, { ...drop, id: `${Date.now()}-${Math.random()}` }].slice(-60);
+      syncPartyRoomState(true);
+    }
     checkAchievements();
   }
 }
 
 function addExp(amount) {
-  player.exp += amount; playSound('gem');
+  if (isMultiplayer) {
+    sharedPartyExp += amount;
+    player.exp = sharedPartyExp;
+    syncPartyRoomState(true);
+  } else {
+    player.exp += amount;
+  }
+  playSound('gem');
   if (player.exp >= player.expNeeded) {
     player.exp -= player.expNeeded; player.level++; player.expNeeded = Math.round(player.expNeeded * 1.4 + 3);
     showUpgradeMenu();
@@ -562,10 +647,35 @@ function update(dt) {
     const g = gems[i], d = Math.hypot(player.x - g.x, player.y - g.y);
     if (d < mag) { const a = Math.atan2(player.y - g.y, player.x - g.x); g.x += Math.cos(a)*10*60*dt; g.y += Math.sin(a)*10*60*dt; }
     if (d < 20) {
-      if(g.type === 'coin') { sessionGold += g.val; playSound('coin'); updateGoldUI(sessionGold); }
-      else { addExp(g.val * (1 + PASSIVES.crown.level * 0.15)); }
+      if (g.type === 'coin') {
+        const newGold = (isMultiplayer ? sharedPartyGold : sessionGold) + g.val;
+        if (isMultiplayer) {
+          sharedPartyGold = newGold;
+          sessionGold = newGold;
+          sharedDrops = sharedDrops.filter(drop => drop.id !== g.id);
+          syncPartyRoomState(true);
+        } else {
+          sessionGold += g.val;
+        }
+        playSound('coin'); updateGoldUI(sessionGold);
+      } else {
+        addExp(g.val * (1 + PASSIVES.crown.level * 0.15));
+        if (isMultiplayer) {
+          sharedDrops = sharedDrops.filter(drop => drop.id !== g.id);
+          syncPartyRoomState(true);
+        }
+      }
       gems.splice(i, 1);
     }
+  }
+
+  if (isMultiplayer && Array.isArray(sharedDrops)) {
+    sharedDrops.forEach(drop => {
+      const exists = gems.some(g => g.id === drop.id);
+      if (!exists) {
+        gems.push({ ...drop, id: drop.id, x: drop.x, y: drop.y, val: drop.val, type: drop.type });
+      }
+    });
   }
 
   updateWeapons(dt);
@@ -602,7 +712,24 @@ function update(dt) {
     if (dist < player.size/2 + e.radius && player.invulnerableTimer <= 0) {
       player.hp -= Math.max(1, e.damage - PASSIVES.armor.level*3); player.invulnerableTimer = 0.45;
       updateHpUI(player.hp, player.maxHp); playSound('hit');
-      if (player.hp <= 0) { gameState = 'GAMEOVER'; showEndScreen(); saveGameProgress(); }
+      if (player.hp <= 0) {
+        if (isMultiplayer) {
+          const partySize = Math.max(1, getPartySize());
+          if (sharedRevivesRemaining > 0) {
+            sharedRevivesRemaining = Math.max(0, sharedRevivesRemaining - 1);
+            player.hp = player.maxHp * 0.6;
+            player.x = 0; player.y = 0; player.invulnerableTimer = 2.5;
+            floatingTexts.push({ x: player.x, y: player.y - 24, text: `復活！剩餘 ${sharedRevivesRemaining} 次`, color: '#facc15', size: 16, life: 1.5, vy: -1.5 });
+            updateHpUI(player.hp, player.maxHp);
+            updatePartyReviveDisplay();
+            syncPartyRoomState(true);
+            return;
+          }
+          triggerPartyFailure();
+          return;
+        }
+        gameState = 'GAMEOVER'; showEndScreen(); saveGameProgress();
+      }
     }
   }
 
@@ -611,7 +738,23 @@ function update(dt) {
     if (Math.hypot(ep.x - player.x, ep.y - player.y) < ep.radius + player.size/2 && player.invulnerableTimer <= 0) {
       player.hp -= Math.max(1, ep.damage - PASSIVES.armor.level*3); player.invulnerableTimer = 0.4; updateHpUI(player.hp, player.maxHp);
       enemyProjectiles.splice(i, 1);
-      if (player.hp <= 0) { gameState = 'GAMEOVER'; showEndScreen(); }
+      if (player.hp <= 0) {
+        if (isMultiplayer) {
+          if (sharedRevivesRemaining > 0) {
+            sharedRevivesRemaining = Math.max(0, sharedRevivesRemaining - 1);
+            player.hp = player.maxHp * 0.6;
+            player.x = 0; player.y = 0; player.invulnerableTimer = 2.5;
+            floatingTexts.push({ x: player.x, y: player.y - 24, text: `復活！剩餘 ${sharedRevivesRemaining} 次`, color: '#facc15', size: 16, life: 1.5, vy: -1.5 });
+            updateHpUI(player.hp, player.maxHp);
+            updatePartyReviveDisplay();
+            syncPartyRoomState(true);
+            continue;
+          }
+          triggerPartyFailure();
+          return;
+        }
+        gameState = 'GAMEOVER'; showEndScreen();
+      }
       continue;
     }
     if (ep.life <= 0) enemyProjectiles.splice(i, 1);
