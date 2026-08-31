@@ -6,7 +6,19 @@ let currentRoomRef = null;
 let myPlayerRef = null;
 let myPlayerId = null;
 let currentRoomListener = null;
-let currentRoomStatus = { isPlaying: false, mapKey: 'dungeon', revivesRemaining: 1, partyExp: 0, partyGold: 0, drops: [], challengeFailed: false };
+let currentRoomStatus = {
+  isPlaying: false,
+  mapKey: 'dungeon',
+  revivesRemaining: 1,
+  partyExp: 0,
+  partyGold: 0,
+  drops: [],
+  challengeFailed: false,
+  upgradeReadyPlayers: {},
+  isUpgradePaused: false,
+  upgradePauseDeadline: 0,
+  combatEvents: []
+};
 
 export async function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost = false) {
   myPlayerId = playerData.id;
@@ -25,7 +37,19 @@ export async function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost 
       if (roomSnapshot.exists()) {
         return { ok: false, reason: 'ROOM_EXISTS' };
       }
-      currentRoomStatus = { isPlaying: false, mapKey: 'dungeon', revivesRemaining: 1, partyExp: 0, partyGold: 0, drops: [], challengeFailed: false };
+      currentRoomStatus = {
+        isPlaying: false,
+        mapKey: 'dungeon',
+        revivesRemaining: 1,
+        partyExp: 0,
+        partyGold: 0,
+        drops: [],
+        challengeFailed: false,
+        upgradeReadyPlayers: {},
+        isUpgradePaused: false,
+        upgradePauseDeadline: 0,
+        combatEvents: []
+      };
       await set(currentRoomRef, { status: currentRoomStatus, players: {} });
     } else if (!roomSnapshot.exists()) {
       return { ok: false, reason: 'ROOM_NOT_FOUND' };
@@ -37,7 +61,7 @@ export async function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost 
     currentRoomListener = onValue(currentRoomRef, (snapshot) => {
       const data = snapshot.val() || {};
       const players = data.players || {};
-      currentRoomStatus = data.status || { ...currentRoomStatus };
+      currentRoomStatus = { ...currentRoomStatus, ...(data.status || {}) };
       onRoomUpdate(players, currentRoomStatus);
     });
 
@@ -86,7 +110,13 @@ export function syncLobbyState(isReady, heroKey) {
 // 新增：房主觸發開始遊戲
 export function setRoomPlayingStatus(isPlaying, mapKey) {
   if (!currentRoomRef) return;
-  update(currentRoomRef, { status: { isPlaying, mapKey } });
+  currentRoomStatus = {
+    ...currentRoomStatus,
+    isPlaying,
+    mapKey,
+    challengeFailed: false
+  };
+  update(currentRoomRef, { status: currentRoomStatus });
 }
 
 export function leaveRemoteRoom() {

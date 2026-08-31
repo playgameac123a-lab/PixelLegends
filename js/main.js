@@ -316,10 +316,10 @@ function resumeAfterUpgrade() {
 
 function beginUpgradePause() {
   upgradePauseDeadline = Date.now() + 30000;
-  upgradeReadyPlayers = { [myPeerId]: false };
+  upgradeReadyPlayers = { ...(upgradeReadyPlayers || {}), [myPeerId]: false };
   updateUpgradeWaitUI();
   if (isMultiplayer && currentRoomCode) {
-    updateRoomStatus({ isUpgradePaused: true, upgradePauseDeadline, upgradeReadyPlayers: upgradeReadyPlayers });
+    updateRoomStatus({ isUpgradePaused: true, upgradePauseDeadline, upgradeReadyPlayers });
   }
 }
 
@@ -335,7 +335,10 @@ function syncPartyRoomState(force = false) {
     partyGold: Number(sharedPartyGold || sessionGold || 0),
     drops: Array.isArray(sharedDrops) ? sharedDrops.slice(-60) : [],
     challengeFailed: sharedChallengeFailed,
-    combatEvents: roomCombatEvents.slice(-18)
+    combatEvents: roomCombatEvents.slice(-18),
+    upgradeReadyPlayers: { ...(upgradeReadyPlayers || {}) },
+    isUpgradePaused: !!upgradePauseDeadline,
+    upgradePauseDeadline: upgradePauseDeadline || 0
   };
   updateRoomStatus(payload);
 }
@@ -364,8 +367,11 @@ function joinLobby(code, asHost) {
     if (status && Array.isArray(status.drops)) sharedDrops = status.drops;
     if (status && Array.isArray(status.combatEvents)) roomCombatEvents = status.combatEvents.slice(-18);
     if (status && typeof status.challengeFailed === 'boolean') sharedChallengeFailed = status.challengeFailed;
-    if (status && status.upgradeReadyPlayers) upgradeReadyPlayers = status.upgradeReadyPlayers;
+    if (status && status.upgradeReadyPlayers) upgradeReadyPlayers = { ...status.upgradeReadyPlayers };
     if (status && typeof status.upgradePauseDeadline === 'number') upgradePauseDeadline = status.upgradePauseDeadline;
+    if (status && typeof status.isUpgradePaused === 'boolean' && status.isUpgradePaused && !upgradePauseDeadline && gameState !== 'UPGRADE') {
+      showUpgradeMenu();
+    }
     if (sharedChallengeFailed) {
       triggerPartyFailure();
       return;
