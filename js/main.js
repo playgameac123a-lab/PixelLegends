@@ -9,6 +9,7 @@ const camera = { x: 0, y: 0 };
 let player = {}, enemies = [], bullets = [], enemyProjectiles = [], gems = [], particles = [], floatingTexts = [], lightningStrikes = [], groundZones = [];
 let sessionGold = 120, totalKills = 0, killCount = 0, highestWave = 1, currentWave = 1, waveTimer = 40;
 let sharedPartyExp = 0, sharedPartyGold = 0, sharedRevivesRemaining = 1, sharedDrops = [], sharedChallengeFailed = false;
+let roomCombatEvents = [];
 let enemySpawnCounter = 0, hasEvolvedAny = false;
 let selectedHeroKey = 'knight', previewHeroKey = 'knight', selectedMapKey = 'dungeon';
 
@@ -207,9 +208,57 @@ function updatePartyReviveDisplay() {
   reviveEl.style.color = value > 0 ? '#facc15' : '#f87171';
 }
 
+function queueCombatEvent(type, x, y, options = {}) {
+  const event = {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    type,
+    x,
+    y,
+    radius: options.radius || 10,
+    color: options.color || '#38bdf8',
+    life: options.life || 0.8,
+    createdAt: Date.now(),
+    targetX: options.targetX ?? x,
+    targetY: options.targetY ?? y
+  };
+  roomCombatEvents = [...roomCombatEvents, event].slice(-18);
+  if (isMultiplayer && currentRoomCode) {
+    updateRoomStatus({ combatEvents: roomCombatEvents.slice(-18) });
+  }
+}
+
+function resolvePlayerDefeat() {
+  if (isMultiplayer) {
+    if (sharedRevivesRemaining > 0) {
+      sharedRevivesRemaining = Math.max(0, sharedRevivesRemaining - 1);
+      player.hp = player.maxHp * 0.6;
+      player.x = 0; player.y = 0; player.invulnerableTimer = 2.5;
+      floatingTexts.push({ x: player.x, y: player.y - 24, text: `復活！剩餘 ${sharedRevivesRemaining} 次`, color: '#facc15', size: 16, life: 1.5, vy: -1.5 });
+      updateHpUI(player.hp, player.maxHp);
+      updatePartyReviveDisplay();
+      syncPartyRoomState(true);
+      return true;
+    }
+    triggerPartyFailure();
+    return false;
+  }
+
+  gameState = 'GAMEOVER';
+  showEndScreen();
+  saveGameProgress();
+  return false;
+}
+
 function triggerPartyFailure() {
   if (sharedChallengeFailed) return;
   sharedChallengeFailed = true;
+  sharedRevivesRemaining = 0;
+  updateRoomStatus({
+    isPlaying: false,
+    revivesRemaining: 0,
+    challengeFailed: true,
+    combatEvents: roomCombatEvents.slice(-18)
+  });
   const endTitle = document.getElementById('endTitle');
   const endDesc = document.getElementById('endDesc');
   if (endTitle) endTitle.innerText = '挑戰失敗';
@@ -223,7 +272,7 @@ function triggerPartyFailure() {
     document.getElementById('minimapWrapper').style.display = 'none';
     if (currentRoomCode) {
       isMultiplayer = false; isRoomHost = false; isMyReady = false; currentRoomCode = '';
-      peers = {}; lobbyPlayers = {};
+      peers = {}; lobbyPlayers = {}; roomCombatEvents = [];
       leaveRemoteRoom();
     }
   }, 1800);
@@ -240,7 +289,8 @@ function syncPartyRoomState(force = false) {
     partyExp: Number(sharedPartyExp || player.exp || 0),
     partyGold: Number(sharedPartyGold || sessionGold || 0),
     drops: Array.isArray(sharedDrops) ? sharedDrops.slice(-60) : [],
-    challengeFailed: sharedChallengeFailed
+    challengeFailed: sharedChallengeFailed,
+    combatEvents: roomCombatEvents.slice(-18)
   };
   updateRoomStatus(payload);
 }
@@ -259,6 +309,7 @@ function joinLobby(code, asHost) {
     if (status && typeof status.partyExp === 'number') sharedPartyExp = status.partyExp;
     if (status && typeof status.partyGold === 'number') sharedPartyGold = status.partyGold;
     if (status && Array.isArray(status.drops)) sharedDrops = status.drops;
+    if (status && Array.isArray(status.combatEvents)) roomCombatEvents = status.combatEvents.slice(-18);
     if (status && typeof status.challengeFailed === 'boolean') sharedChallengeFailed = status.challengeFailed;
     if (typeof sharedPartyGold === 'number') sessionGold = sharedPartyGold;
     if (sharedChallengeFailed) {
@@ -373,6 +424,7 @@ function startGame() {
     sharedRevivesRemaining = Math.max(1, getPartySize());
     sharedDrops = [];
     sharedChallengeFailed = false;
+    roomCombatEvents = [];
     syncPartyRoomState(true);
   }
   updatePartyReviveDisplay();
@@ -480,6 +532,7 @@ function updateWeapons(dt) {
     if (w.timer >= (w.evolved?0.11:Math.max(0.18, 0.75-w.level*0.1))*cdBonus && enemies.length > 0) {
       w.timer = 0; player.attackPulse = 0.18; const t = enemies[0], a = Math.atan2(t.y-player.y, t.x-player.x);
       const cnt = (w.evolved?3:(1+Math.floor(w.level/2))) + extra;
+      if (isMultiplayer && currentRoomCode) queueCombatEvent('burst', player.x, player.y, { radius: 12, color: '#38bdf8', life: 0.35, targetX: t.x, targetY: t.y });
       for(let i=0; i<cnt; i++) bullets.push({ x: player.x, y: player.y, vx: Math.cos(a+(i*0.16))*9, vy: Math.sin(a+(i*0.16))*9, radius: (w.evolved?7:5)*area, color: w.evolved?'#f59e0b':'#38bdf8', damage: (w.evolved?48:20+w.level*8)*dmgBonus, pierce: w.evolved?3:1, life: 1.8 });
     }
   }
@@ -499,6 +552,7 @@ function updateWeapons(dt) {
     d.timer += dt;
     if (d.timer >= (d.evolved?0.22:Math.max(0.28, 1.0-d.level*0.14))*cdBonus) {
       d.timer = 0; player.attackPulse = 0.18; const a = Math.atan2(player.facingY||0, player.facingX||1), cnt = (d.evolved?14:1+d.level)+extra;
+      if (isMultiplayer && currentRoomCode) queueCombatEvent('burst', player.x, player.y, { radius: 14, color: '#a855f7', life: 0.32, targetX: player.x + Math.cos(a) * 50, targetY: player.y + Math.sin(a) * 50 });
       for(let i=0; i<cnt; i++) {
         const ang = d.evolved ? (i/14)*Math.PI*2 : a + (i - (cnt-1)/2)*0.12;
         bullets.push({ x: player.x, y: player.y, vx: Math.cos(ang)*12, vy: Math.sin(ang)*12, radius: (d.evolved?6:4)*area, color: d.evolved?'#a855f7':'#e2e8f0', damage: (d.evolved?42:18+d.level*6)*dmgBonus, pierce: d.evolved?999:2+Math.floor(d.level/2), life: 1.5 });
@@ -510,6 +564,8 @@ function updateWeapons(dt) {
     t.timer += dt;
     if (t.timer >= (t.evolved?0.55:Math.max(0.7, 2.0-t.level*0.25))*cdBonus && enemies.length > 0) {
       t.timer = 0; player.attackPulse = 0.2; const cnt = (t.evolved?9:1+Math.floor(t.level/2))+extra;
+      const target = [...enemies].sort(()=>0.5-Math.random()).slice(0,cnt)[0];
+      if (isMultiplayer && currentRoomCode && target) queueCombatEvent('burst', target.x, target.y, { radius: 20, color: '#38bdf8', life: 0.38, targetX: target.x, targetY: target.y });
       [...enemies].sort(()=>0.5-Math.random()).slice(0,cnt).forEach(e => { damageEnemy(e, (t.evolved?140:50+t.level*22)*dmgBonus, '#38bdf8'); lightningStrikes.push({ x: e.x, y: e.y, life: 0.18 }); });
     }
   }
@@ -547,6 +603,7 @@ function updateWeapons(dt) {
       const target = [...enemies].sort((a, b) => Math.hypot(a.x - player.x, a.y - player.y) - Math.hypot(b.x - player.x, b.y - player.y))[0];
       if (target) {
         groundZones.push({ x: target.x, y: target.y, radius: poisonRange, type: 'poison', damage: (f.evolved ? 26 : 12 + f.level * 7) * dmgBonus, life: 4.2, color: 'rgba(34,197,94,0.28)' });
+        if (isMultiplayer && currentRoomCode) queueCombatEvent('poison', target.x, target.y, { radius: poisonRange, color: 'rgba(34,197,94,0.65)', life: 4.2, targetX: target.x, targetY: target.y });
         lightningStrikes.push({ x: target.x, y: target.y, life: 0.12 });
       }
     }
@@ -721,22 +778,7 @@ function update(dt) {
       player.hp -= Math.max(1, e.damage - PASSIVES.armor.level*3); player.invulnerableTimer = 0.45;
       updateHpUI(player.hp, player.maxHp); playSound('hit');
       if (player.hp <= 0) {
-        if (isMultiplayer) {
-          const partySize = Math.max(1, getPartySize());
-          if (sharedRevivesRemaining > 0) {
-            sharedRevivesRemaining = Math.max(0, sharedRevivesRemaining - 1);
-            player.hp = player.maxHp * 0.6;
-            player.x = 0; player.y = 0; player.invulnerableTimer = 2.5;
-            floatingTexts.push({ x: player.x, y: player.y - 24, text: `復活！剩餘 ${sharedRevivesRemaining} 次`, color: '#facc15', size: 16, life: 1.5, vy: -1.5 });
-            updateHpUI(player.hp, player.maxHp);
-            updatePartyReviveDisplay();
-            syncPartyRoomState(true);
-            return;
-          }
-          triggerPartyFailure();
-          return;
-        }
-        gameState = 'GAMEOVER'; showEndScreen(); saveGameProgress();
+        if (!resolvePlayerDefeat()) return;
       }
     }
   }
@@ -748,18 +790,8 @@ function update(dt) {
       enemyProjectiles.splice(i, 1);
       if (player.hp <= 0) {
         if (isMultiplayer) {
-          if (sharedRevivesRemaining > 0) {
-            sharedRevivesRemaining = Math.max(0, sharedRevivesRemaining - 1);
-            player.hp = player.maxHp * 0.6;
-            player.x = 0; player.y = 0; player.invulnerableTimer = 2.5;
-            floatingTexts.push({ x: player.x, y: player.y - 24, text: `復活！剩餘 ${sharedRevivesRemaining} 次`, color: '#facc15', size: 16, life: 1.5, vy: -1.5 });
-            updateHpUI(player.hp, player.maxHp);
-            updatePartyReviveDisplay();
-            syncPartyRoomState(true);
-            continue;
-          }
-          triggerPartyFailure();
-          return;
+          if (!resolvePlayerDefeat()) return;
+          continue;
         }
         gameState = 'GAMEOVER'; showEndScreen();
       }
@@ -853,7 +885,7 @@ function draw() {
 
   if (isMultiplayer) {
     const now = Date.now();
-    Object.keys(peers).forEach(pid => {
+      Object.keys(peers).forEach(pid => {
       const p = peers[pid];
       if (now - p.lastSeen < 3000 && p.currentX !== undefined) {
         ctx.save(); ctx.translate(p.currentX, p.currentY);
@@ -874,6 +906,32 @@ function draw() {
       }
     });
   }
+
+  roomCombatEvents.forEach(event => {
+    const lifeProgress = Math.max(0, 1 - (Date.now() - event.createdAt) / ((event.life || 0.8) * 1000));
+    if (lifeProgress <= 0) return;
+    ctx.save();
+    if (event.type === 'poison') {
+      ctx.beginPath();
+      ctx.arc(event.x, event.y, event.radius * lifeProgress, 0, Math.PI * 2);
+      ctx.fillStyle = event.color.replace(/0\.\d+\)/, `${Math.max(0.15, 0.4 * lifeProgress)})`);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(event.x, event.y);
+      ctx.lineTo(event.targetX, event.targetY);
+      ctx.strokeStyle = event.color;
+      ctx.lineWidth = 2.5;
+      ctx.globalAlpha = 0.5 + lifeProgress * 0.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(event.x, event.y, event.radius * (0.4 + lifeProgress * 0.8), 0, Math.PI * 2);
+      ctx.fillStyle = event.color;
+      ctx.globalAlpha = 0.34 + lifeProgress * 0.5;
+      ctx.fill();
+    }
+    ctx.restore();
+  });
 
   enemies.forEach(e => {
     ctx.save(); ctx.translate(e.x, e.y);
