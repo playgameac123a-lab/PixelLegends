@@ -252,6 +252,9 @@ export function renderUpgradeOptions(options, onSelect) {
   options.forEach((opt, idx) => {
     const card = document.createElement('div');
     card.className = `skill-card ${opt.type === 'evolve' ? 'evolve' : ''}`;
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.style.pointerEvents = 'auto';
 
     const iconBox = document.createElement('div'); iconBox.className = 'skill-icon-box';
     const iconCanvas = cloneCanvas(PixelIconCache[opt.iconKey] || PixelIconCache.wand);
@@ -261,9 +264,27 @@ export function renderUpgradeOptions(options, onSelect) {
     info.className = 'skill-info';
     info.innerHTML = `<h4><span>[${idx + 1}] ${opt.name}</span></h4><p>${opt.desc}</p>`;
 
+    const handleSelect = (event) => {
+      if (event) {
+        event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
+      }
+      if (typeof onSelect !== 'function') return;
+      card.style.pointerEvents = 'none';
+      card.classList.add('locked');
+      card.setAttribute('aria-disabled', 'true');
+      onSelect(opt);
+    };
+
     card.appendChild(iconBox);
     card.appendChild(info);
-    card.onclick = () => onSelect(opt);
+    card.addEventListener('click', handleSelect, { once: true });
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleSelect(event);
+      }
+    }, { once: true });
     list.appendChild(card);
   });
 }

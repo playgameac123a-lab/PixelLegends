@@ -16,6 +16,7 @@ let selectedHeroKey = 'knight', previewHeroKey = 'knight', selectedMapKey = 'dun
 let isMultiplayer = false, isRoomHost = false, isMyReady = false, currentRoomCode = '';
 let lobbyPlayers = {}, peers = {}, syncTimer = 0;
 let upgradePauseDeadline = 0, upgradeReadyPlayers = {};
+let upgradeSelectionLocked = false;
 let myPeerId = 'hero_' + Math.random().toString(36).substring(2, 6);
 let myName = '勇者#' + myPeerId.substring(5);
 
@@ -48,16 +49,28 @@ window.onload = () => {
     renderAllPixelIcons();
   });
 
-  window.addEventListener('keydown', e => { 
-    if(keys.hasOwnProperty(e.key)) keys[e.key] = true; 
-    initAudio(); 
-    if (gameState === 'UPGRADE' && (e.key === '1' || e.key === '2' || e.key === '3')) {
-      const idx = parseInt(e.key) - 1;
+  const normalizeKey = (rawKey) => {
+    const value = (rawKey || '').toLowerCase();
+    if (!value) return '';
+    if (value.startsWith('key')) return value.slice(3);
+    if (value.startsWith('arrow')) return value.replace('arrow', '');
+    return value;
+  };
+
+  window.addEventListener('keydown', e => {
+    const key = normalizeKey(e.key || e.code || '');
+    if (Object.prototype.hasOwnProperty.call(keys, key)) keys[key] = true;
+    initAudio();
+    if (gameState === 'UPGRADE' && !upgradeSelectionLocked && (key === '1' || key === '2' || key === '3')) {
+      const idx = parseInt(key, 10) - 1;
       const cards = document.querySelectorAll('#skillOptionsList .skill-card');
       if (cards[idx]) cards[idx].click();
     }
   });
-  window.addEventListener('keyup', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = false; });
+  window.addEventListener('keyup', e => {
+    const key = normalizeKey(e.key || e.code || '');
+    if (Object.prototype.hasOwnProperty.call(keys, key)) keys[key] = false;
+  });
   
   lastTime = performance.now();
   requestAnimationFrame(gameLoop);
@@ -303,6 +316,7 @@ function updateUpgradeWaitUI() {
 function resumeAfterUpgrade() {
   upgradePauseDeadline = 0;
   upgradeReadyPlayers = {};
+  upgradeSelectionLocked = false;
   const waitEl = document.getElementById('upgradeWaitStatus');
   if (waitEl) {
     waitEl.classList.remove('visible');
@@ -566,7 +580,9 @@ function showEndScreen() {
 }
 
 function showUpgradeMenu() {
+  if (gameState === 'UPGRADE' || upgradeSelectionLocked) return;
   gameState = 'UPGRADE';
+  upgradeSelectionLocked = false;
   beginUpgradePause();
   playSound('levelup');
   const options = [];
@@ -590,6 +606,13 @@ function showUpgradeMenu() {
   if (selected.length === 0) selected.push({ type: 'gold', name: '諸神賜福', iconKey: 'gold_coin', desc: '獲取 150 金幣', apply: () => { sessionGold += 150; updateGoldUI(sessionGold); } });
 
   const finalizeSelection = (opt) => {
+    if (upgradeSelectionLocked) return;
+    upgradeSelectionLocked = true;
+    document.querySelectorAll('#skillOptionsList .skill-card').forEach(card => {
+      card.style.pointerEvents = 'none';
+      card.classList.add('locked');
+      card.setAttribute('aria-disabled', 'true');
+    });
     opt.apply();
     updateEquipmentHUD(WEAPONS, PASSIVES); saveGameProgress(); checkAchievements();
     if (isMultiplayer && currentRoomCode) {
