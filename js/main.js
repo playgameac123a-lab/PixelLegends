@@ -358,7 +358,7 @@ function startGame() {
   const hpBase = hero.baseHp * (1 + Talents.hp.level * Talents.hp.value);
   player = { 
     x: 0, y: 0, size: 24, hp: hpBase, maxHp: hpBase, speed: hero.baseSpeed * (1 + Talents.speed.level * Talents.speed.value), 
-    level: 1, exp: 0, expNeeded: 5, facingX: 1, facingY: 0, invulnerableTimer: 0,
+    level: 1, exp: 0, expNeeded: 5, facingX: 1, facingY: 0, invulnerableTimer: 0, attackPulse: 0,
     damageMult: 1 + Talents.dmg.level * Talents.dmg.value,
     cooldownMult: 1 - Talents.cooldown.level * Talents.cooldown.value,
     orbAngle: 0, laserTarget: null
@@ -478,7 +478,7 @@ function updateWeapons(dt) {
   if (w.level > 0) {
     w.timer += dt;
     if (w.timer >= (w.evolved?0.11:Math.max(0.18, 0.75-w.level*0.1))*cdBonus && enemies.length > 0) {
-      w.timer = 0; const t = enemies[0], a = Math.atan2(t.y-player.y, t.x-player.x);
+      w.timer = 0; player.attackPulse = 0.18; const t = enemies[0], a = Math.atan2(t.y-player.y, t.x-player.x);
       const cnt = (w.evolved?3:(1+Math.floor(w.level/2))) + extra;
       for(let i=0; i<cnt; i++) bullets.push({ x: player.x, y: player.y, vx: Math.cos(a+(i*0.16))*9, vy: Math.sin(a+(i*0.16))*9, radius: (w.evolved?7:5)*area, color: w.evolved?'#f59e0b':'#38bdf8', damage: (w.evolved?48:20+w.level*8)*dmgBonus, pierce: w.evolved?3:1, life: 1.8 });
     }
@@ -487,7 +487,7 @@ function updateWeapons(dt) {
   if (o.level > 0) {
     player.orbAngle += (o.evolved?4.5:2.5) * dt; o.timer += dt;
     if(o.timer >= 0.18) {
-      o.timer = 0; const cnt = (o.evolved?6:2+o.level)+extra, rad = (o.evolved?110:75)*area;
+      o.timer = 0; player.attackPulse = 0.14; const cnt = (o.evolved?6:2+o.level)+extra, rad = (o.evolved?110:75)*area;
       for(let i=0; i<cnt; i++) {
         const ox = player.x + Math.cos(player.orbAngle + i*(Math.PI*2/cnt))*rad, oy = player.y + Math.sin(player.orbAngle + i*(Math.PI*2/cnt))*rad;
         enemies.forEach(e => { if(Math.hypot(e.x-ox, e.y-oy) < 16*area + e.radius) damageEnemy(e, (o.evolved?42:15+o.level*5)*dmgBonus, o.evolved?'#facc15':'#818cf8'); });
@@ -498,7 +498,7 @@ function updateWeapons(dt) {
   if (d.level > 0) {
     d.timer += dt;
     if (d.timer >= (d.evolved?0.22:Math.max(0.28, 1.0-d.level*0.14))*cdBonus) {
-      d.timer = 0; const a = Math.atan2(player.facingY||0, player.facingX||1), cnt = (d.evolved?14:1+d.level)+extra;
+      d.timer = 0; player.attackPulse = 0.18; const a = Math.atan2(player.facingY||0, player.facingX||1), cnt = (d.evolved?14:1+d.level)+extra;
       for(let i=0; i<cnt; i++) {
         const ang = d.evolved ? (i/14)*Math.PI*2 : a + (i - (cnt-1)/2)*0.12;
         bullets.push({ x: player.x, y: player.y, vx: Math.cos(ang)*12, vy: Math.sin(ang)*12, radius: (d.evolved?6:4)*area, color: d.evolved?'#a855f7':'#e2e8f0', damage: (d.evolved?42:18+d.level*6)*dmgBonus, pierce: d.evolved?999:2+Math.floor(d.level/2), life: 1.5 });
@@ -509,7 +509,7 @@ function updateWeapons(dt) {
   if (t.level > 0) {
     t.timer += dt;
     if (t.timer >= (t.evolved?0.55:Math.max(0.7, 2.0-t.level*0.25))*cdBonus && enemies.length > 0) {
-      t.timer = 0; const cnt = (t.evolved?9:1+Math.floor(t.level/2))+extra;
+      t.timer = 0; player.attackPulse = 0.2; const cnt = (t.evolved?9:1+Math.floor(t.level/2))+extra;
       [...enemies].sort(()=>0.5-Math.random()).slice(0,cnt).forEach(e => { damageEnemy(e, (t.evolved?140:50+t.level*22)*dmgBonus, '#38bdf8'); lightningStrikes.push({ x: e.x, y: e.y, life: 0.18 }); });
     }
   }
@@ -517,7 +517,7 @@ function updateWeapons(dt) {
   if (wW.level > 0) {
     wW.timer += dt;
     if (wW.timer >= (wW.evolved ? 0.42 : Math.max(0.52, 1.2 - wW.level * 0.12)) * cdBonus) {
-      wW.timer = 0;
+      wW.timer = 0; player.attackPulse = 0.22;
       const angle = Math.atan2(player.facingY || 0, player.facingX || 1);
       [...enemies].forEach(e => {
         const dx = e.x - player.x, dy = e.y - player.y;
@@ -534,7 +534,7 @@ function updateWeapons(dt) {
   if (b.level > 0) {
     b.timer += dt;
     if (b.timer >= (b.evolved?0.45:1.1-b.level*0.12)*cdBonus) {
-      b.timer = 0; const a = Math.atan2(player.facingY||0, player.facingX||1);
+      b.timer = 0; player.attackPulse = 0.18; const a = Math.atan2(player.facingY||0, player.facingX||1);
       bullets.push({ x: player.x, y: player.y, vx: Math.cos(a)*15, vy: Math.sin(a)*15, radius: (b.evolved?9:5)*area, color: '#fde047', damage: (b.evolved?120:45+b.level*18)*dmgBonus, pierce: b.evolved?999:2+b.level, life: 1.8 });
     }
   }
@@ -577,7 +577,7 @@ function updateWeapons(dt) {
   if (laser.level > 0) {
     laser.timer += dt;
     if (laser.timer >= (laser.evolved ? 0.18 : Math.max(0.35, 0.9 - laser.level * 0.08)) * cdBonus && enemies.length > 0) {
-      laser.timer = 0;
+      laser.timer = 0; player.attackPulse = 0.16;
       const target = enemies.reduce((best, e) => {
         const d = Math.hypot(e.x - player.x, e.y - player.y);
         if (!best || d < best.dist) return { e, dist: d };
@@ -593,7 +593,7 @@ function updateWeapons(dt) {
   if (spear.level > 0) {
     spear.timer += dt;
     if (spear.timer >= (spear.evolved ? 0.5 : Math.max(0.8, 1.7 - spear.level * 0.12)) * cdBonus) {
-      spear.timer = 0;
+      spear.timer = 0; player.attackPulse = 0.2;
       const angles = spear.evolved ? Array.from({ length: 8 }, (_, i) => (i / 8) * Math.PI * 2) : [-0.9, -0.3, 0.3, 0.9];
       angles.forEach((a) => {
         bullets.push({ x: player.x, y: player.y, vx: Math.cos(a) * 12, vy: Math.sin(a) * 12, radius: spear.evolved ? 9 : 5.5, color: '#facc15', damage: (spear.evolved ? 130 : 28 + spear.level * 12) * dmgBonus, pierce: spear.evolved ? 6 : 2, life: 1.4 });
@@ -604,7 +604,7 @@ function updateWeapons(dt) {
   if (skull.level > 0) {
     skull.timer += dt;
     if (skull.timer >= (skull.evolved ? 0.9 : Math.max(1.3, 2.2 - skull.level * 0.16)) * cdBonus && enemies.length > 0) {
-      skull.timer = 0;
+      skull.timer = 0; player.attackPulse = 0.16;
       const target = enemies[Math.floor(Math.random() * enemies.length)];
       if (target) {
         bullets.push({ x: player.x, y: player.y, vx: (target.x - player.x) / Math.max(1, Math.hypot(target.x - player.x, target.y - player.y)) * 10, vy: (target.y - player.y) / Math.max(1, Math.hypot(target.x - player.x, target.y - player.y)) * 10, radius: skull.evolved ? 10 : 6, color: '#c084fc', damage: (skull.evolved ? 110 : 24 + skull.level * 14) * dmgBonus, pierce: 2, life: 1.6, type: 'skull' });
@@ -627,6 +627,7 @@ function update(dt) {
   player.x += mx * curSpd * 60 * dt; player.y += my * curSpd * 60 * dt;
   camera.x = player.x - window.innerWidth / 2; camera.y = player.y - window.innerHeight / 2;
   if (player.invulnerableTimer > 0) player.invulnerableTimer -= dt;
+  if (player.attackPulse > 0) player.attackPulse = Math.max(0, player.attackPulse - dt);
   if (PASSIVES.heart.level > 0) player.hp = Math.min(player.maxHp, player.hp + PASSIVES.heart.level * 1.5 * dt);
 
   if (isMultiplayer) {
@@ -634,12 +635,19 @@ function update(dt) {
       const p = peers[id];
       if (p.targetX !== undefined && p.targetY !== undefined) {
         const dx = p.targetX - p.currentX, dy = p.targetY - p.currentY;
-        if (Math.hypot(dx, dy) > 150) { p.currentX = p.targetX; p.currentY = p.targetY; } 
-        else { p.currentX += dx * 0.15; p.currentY += dy * 0.15; }
+        const dist = Math.hypot(dx, dy);
+        if (dist > 120) {
+          p.currentX = p.targetX; p.currentY = p.targetY;
+        } else {
+          const lerp = 0.18;
+          p.currentX += dx * lerp;
+          p.currentY += dy * lerp;
+        }
+        p.attackPulse = Math.max(0, (p.attackPulse || 0) - dt * 2.2);
       }
     });
     syncTimer += dt;
-    if (syncTimer >= 0.05) { syncPlayerPosition(player.x, player.y, player.hp, player.facingX, player.level, player.maxHp); syncTimer = 0; }
+    if (syncTimer >= 0.05) { syncPlayerPosition(player.x, player.y, player.hp, player.facingX, player.level, player.maxHp, player.attackPulse); syncTimer = 0; }
   }
 
   const mag = 100 * (1 + PASSIVES.magnet.level * 0.35);
@@ -851,7 +859,15 @@ function draw() {
         ctx.save(); ctx.translate(p.currentX, p.currentY);
         if (p.facingX < 0) ctx.scale(-1, 1);
         const spr = SpriteCanvasCache[`hero_${p.heroKey}`] || SpriteCanvasCache.peerPlayer;
-        if(spr) ctx.drawImage(spr, -spr.width/2, -spr.height/2);
+        if (spr) ctx.drawImage(spr, -spr.width / 2, -spr.height / 2);
+        if ((p.attackPulse || 0) > 0.02) {
+          const pulse = p.attackPulse || 0;
+          ctx.beginPath();
+          ctx.arc(0, 0, 18 + pulse * 40, -0.7, 0.7);
+          ctx.strokeStyle = `rgba(56, 189, 248, ${0.3 + pulse * 1.2})`;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
         ctx.scale(p.facingX < 0 ? -1 : 1, 1);
         ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#10b981'; ctx.textAlign = 'center'; ctx.fillText(p.name.split(' ')[0], 0, -22);
         ctx.restore();

@@ -65,14 +65,16 @@ export function handleRoomUpdate(playersData, localPeers) {
       localPeers[id].targetX = remoteData.x; localPeers[id].targetY = remoteData.y;
       localPeers[id].hp = remoteData.hp; localPeers[id].maxHp = remoteData.maxHp || 100;
       localPeers[id].facingX = remoteData.facingX; localPeers[id].level = remoteData.level || 1;
+      localPeers[id].attackPulse = Number(remoteData.attackPulse || 0);
       localPeers[id].lastSeen = now;
     }
+    localPeers[id].lastSeen = now;
   });
 }
 
-export function syncPlayerPosition(x, y, hp, facingX, level, maxHp) {
+export function syncPlayerPosition(x, y, hp, facingX, level, maxHp, attackPulse = 0) {
   if (!myPlayerRef) return;
-  update(myPlayerRef, { x, y, hp, maxHp, facingX, level, lastSeen: Date.now() });
+  update(myPlayerRef, { x, y, hp, maxHp, facingX, level, attackPulse, lastSeen: Date.now() });
 }
 
 // 新增：同步大廳中的選角與準備狀態
