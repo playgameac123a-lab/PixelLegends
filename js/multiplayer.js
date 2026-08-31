@@ -1,5 +1,5 @@
 import { app } from './firebase-config.js';
-import { getDatabase, ref, set, onValue, update, remove, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+import { getDatabase, ref, get, set, onValue, update, remove, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
 const db = getDatabase(app);
 let currentRoomRef = null;
@@ -7,7 +7,7 @@ let myPlayerRef = null;
 let myPlayerId = null;
 let currentRoomListener = null;
 
-export function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost = false) {
+export async function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost = false) {
   myPlayerId = playerData.id;
 
   if (currentRoomRef && currentRoomListener) {
@@ -17,16 +17,19 @@ export function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost = fals
   currentRoomRef = ref(db, `rooms/${roomCode}`);
   myPlayerRef = ref(db, `rooms/${roomCode}/players/${playerData.id}`);
 
-  onDisconnect(myPlayerRef).remove();
+  const roomSnapshot = await get(currentRoomRef);
 
   if (isHost) {
-    set(currentRoomRef, {
-      status: { isPlaying: false, mapKey: 'dungeon' },
-      players: {}
-    });
+    if (roomSnapshot.exists()) {
+      return { ok: false, reason: 'ROOM_EXISTS' };
+    }
+    await set(currentRoomRef, { status: { isPlaying: false, mapKey: 'dungeon' }, players: {} });
+  } else if (!roomSnapshot.exists()) {
+    return { ok: false, reason: 'ROOM_NOT_FOUND' };
   }
 
-  set(myPlayerRef, playerData);
+  onDisconnect(myPlayerRef).remove();
+  await set(myPlayerRef, playerData);
 
   currentRoomListener = onValue(currentRoomRef, (snapshot) => {
     const data = snapshot.val() || {};
@@ -34,6 +37,8 @@ export function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost = fals
     const status = data.status || { isPlaying: false, mapKey: 'dungeon' };
     onRoomUpdate(players, status);
   });
+
+  return { ok: true, roomCode };
 }
 
 export function handleRoomUpdate(playersData, localPeers) {

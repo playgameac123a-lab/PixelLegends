@@ -212,7 +212,22 @@ function joinLobby(code, asHost) {
       handleRoomUpdate(playersData, peers);
       if (gameState === 'MENU') showLobbyUI();
     }
-  }, asHost);
+  }, asHost).then((result) => {
+    if (!result || !result.ok) {
+      if (result && result.reason === 'ROOM_NOT_FOUND') {
+        alert('此房間代碼不存在，請確認代碼後再加入。');
+        showScreen('multiMatchScreen');
+      } else if (result && result.reason === 'ROOM_EXISTS') {
+        alert('此房間代碼已存在，請換另一個代碼。');
+        showScreen('multiMatchScreen');
+      }
+      return;
+    }
+  }).catch((error) => {
+    console.error('join room failed:', error);
+    alert('加入房間失敗，請重試。');
+    showScreen('multiMatchScreen');
+  });
 }
 
 function showLobbyUI() {
