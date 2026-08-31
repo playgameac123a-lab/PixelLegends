@@ -27,6 +27,8 @@ body, html { width: 100%; height: 100%; overflow: hidden; background-color: #030
 @keyframes popIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .panel-title { font-size: 18px; font-weight: 900; margin-bottom: 3px; color: #38bdf8; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .panel-desc { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
+.upgrade-wait-status { display: none; margin: 0 0 8px; padding: 6px 10px; border-radius: 8px; background: rgba(13, 65, 94, 0.7); border: 1px solid rgba(56, 189, 248, 0.35); color: #bae6fd; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
+.upgrade-wait-status.visible { display: block; }
 .menu-btn-grid { display: grid; grid-template-columns: 1fr; gap: 7px; width: 100%; }
 .action-btn { background: linear-gradient(135deg, #0369a1, #075985); color: #ffffff; border: 1px solid rgba(255,255,255,0.18); padding: 10px 14px; font-size: 13px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .action-btn:active { transform: scale(0.97); }
