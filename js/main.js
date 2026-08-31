@@ -14,7 +14,7 @@ let enemySpawnCounter = 0, hasEvolvedAny = false;
 let selectedHeroKey = 'knight', previewHeroKey = 'knight', selectedMapKey = 'dungeon';
 
 let isMultiplayer = false, isRoomHost = false, isMyReady = false, currentRoomCode = '';
-let lobbyPlayers = {}, peers = {}, syncTimer = 0;
+let lobbyPlayers = {}, peers = {}, syncTimer = 0, groundZoneSyncTimer = 0;
 let upgradePauseDeadline = 0, upgradeReadyPlayers = {};
 let upgradeSelectionLocked = false;
 let myPeerId = 'hero_' + Math.random().toString(36).substring(2, 6);
@@ -233,7 +233,8 @@ function queueCombatEvent(type, x, y, options = {}) {
     life: options.life || 0.8,
     createdAt: Date.now(),
     targetX: options.targetX ?? x,
-    targetY: options.targetY ?? y
+    targetY: options.targetY ?? y,
+    glow: options.glow ?? Math.max(12, (options.radius || 10) * 2.5)
   };
   roomCombatEvents = [...roomCombatEvents, event].slice(-18);
   if (isMultiplayer && currentRoomCode) {
@@ -353,6 +354,15 @@ function syncPartyRoomState(force = false, revivesOverride = null) {
     partyExp: Number(sharedPartyExp || player.exp || 0),
     partyGold: Number(sharedPartyGold || sessionGold || 0),
     drops: Array.isArray(sharedDrops) ? sharedDrops.slice(-60) : [],
+    groundZones: Array.isArray(groundZones) ? groundZones.filter(z => z && z.type === 'poison').map(z => ({
+      x: z.x,
+      y: z.y,
+      radius: z.radius,
+      type: z.type,
+      damage: z.damage,
+      life: z.life,
+      color: z.color
+    })) : [],
     challengeFailed: sharedChallengeFailed,
     combatEvents: roomCombatEvents.slice(-18),
     upgradeReadyPlayers: { ...(upgradeReadyPlayers || {}) },
@@ -384,6 +394,19 @@ function joinLobby(code, asHost) {
       updateGoldUI(sessionGold);
     }
     if (status && Array.isArray(status.drops)) sharedDrops = status.drops;
+    if (status && Array.isArray(status.groundZones)) {
+      groundZones = status.groundZones
+        .filter(z => z && z.type === 'poison')
+        .map(z => ({
+          x: z.x,
+          y: z.y,
+          radius: z.radius,
+          type: z.type,
+          damage: z.damage,
+          life: z.life,
+          color: z.color
+        }));
+    }
     if (status && Array.isArray(status.combatEvents)) roomCombatEvents = status.combatEvents.slice(-18);
     if (status && typeof status.challengeFailed === 'boolean') sharedChallengeFailed = status.challengeFailed;
     if (status && status.upgradeReadyPlayers) upgradeReadyPlayers = { ...status.upgradeReadyPlayers };
@@ -511,6 +534,7 @@ function startGame() {
     sharedDrops = [];
     sharedChallengeFailed = false;
     roomCombatEvents = [];
+    groundZoneSyncTimer = 0;
     syncPartyRoomState(true);
   }
   updatePartyReviveDisplay();
@@ -718,8 +742,11 @@ function updateWeapons(dt) {
       f.timer = 0;
       const target = [...enemies].sort((a, b) => Math.hypot(a.x - player.x, a.y - player.y) - Math.hypot(b.x - player.x, b.y - player.y))[0];
       if (target) {
-        groundZones.push({ x: target.x, y: target.y, radius: poisonRange, type: 'poison', damage: (f.evolved ? 26 : 12 + f.level * 7) * dmgBonus, life: 4.2, color: 'rgba(34,197,94,0.28)' });
-        if (isMultiplayer && currentRoomCode) queueCombatEvent('poison', target.x, target.y, { radius: poisonRange, color: 'rgba(34,197,94,0.65)', life: 4.2, targetX: target.x, targetY: target.y });
+        groundZones.push({ x: target.x, y: target.y, radius: poisonRange, type: 'poison', damage: (f.evolved ? 26 : 12 + f.level * 7) * dmgBonus, life: 5, color: 'rgba(34,197,94,0.28)' });
+        if (isMultiplayer && currentRoomCode) {
+          queueCombatEvent('poison', target.x, target.y, { radius: poisonRange, color: 'rgba(34,197,94,0.65)', life: 5, targetX: target.x, targetY: target.y });
+          syncPartyRoomState(true);
+        }
         lightningStrikes.push({ x: target.x, y: target.y, life: 0.12 });
       }
     }
@@ -887,9 +914,47 @@ function update(dt) {
   enemySpawnCounter += dt;
   if (enemySpawnCounter >= Math.max(0.15, 0.9 - currentWave*0.01) && enemies.length < 150) { spawnEnemy(); enemySpawnCounter = 0; }
   
+  for (let i = groundZones.length - 1; i >= 0; i--) {
+    const z = groundZones[i];
+    z.life -= dt;
+    if (z.life <= 0) {
+      groundZones.splice(i, 1);
+      if (isMultiplayer && currentRoomCode) syncPartyRoomState(true);
+      continue;
+    }
+    enemies.forEach(e => {
+      if (e.dead) return;
+      if (Math.hypot(e.x - z.x, e.y - z.y) < z.radius) {
+        e.poisonTimer = Math.max(e.poisonTimer || 0, 5);
+        e.poisonDamage = Math.max(e.poisonDamage || 0, z.damage || 10);
+        e.poisonDamageTick = 0.5;
+      }
+    });
+  }
+
+  if (isMultiplayer && currentRoomCode) {
+    if (groundZones.length > 0) {
+      groundZoneSyncTimer -= dt;
+      if (groundZoneSyncTimer <= 0) {
+        syncPartyRoomState(true);
+        groundZoneSyncTimer = 0.25;
+      }
+    } else {
+      groundZoneSyncTimer = 0;
+    }
+  }
+
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     if (e.dead) { enemies.splice(i, 1); continue; }
+    if ((e.poisonTimer || 0) > 0) {
+      e.poisonTimer = Math.max(0, (e.poisonTimer || 0) - dt);
+      e.poisonDamageTick = (e.poisonDamageTick || 0.5) - dt;
+      if ((e.poisonDamageTick || 0) <= 0) {
+        e.poisonDamageTick = 0.5;
+        damageEnemy(e, e.poisonDamage || 8, '#4ade80');
+      }
+    }
     const dist = Math.hypot(player.x - e.x, player.y - e.y), a = Math.atan2(player.y - e.y, player.x - e.x);
     if (e.type === 'archer') {
       if (dist > 200) { e.x += Math.cos(a)*e.speed*60*dt; e.y += Math.sin(a)*e.speed*60*dt; }
@@ -1009,7 +1074,19 @@ function draw() {
   drawMap(ctx, camera, canvas.width, canvas.height, MAPS[selectedMapKey] || MAPS.dungeon);
   gems.forEach(g => { ctx.beginPath(); ctx.arc(g.x, g.y, g.type==='coin'?4.5:4, 0, Math.PI*2); ctx.fillStyle = g.type==='coin'?'#facc15':'#38bdf8'; ctx.fill(); });
   groundZones.forEach(z => {
-    ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2); ctx.fillStyle = z.color; ctx.fill();
+    ctx.save();
+    ctx.shadowBlur = 24;
+    ctx.shadowColor = z.type === 'poison' ? '#4ade80' : '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.radius * 1.05, 0, Math.PI * 2);
+    ctx.fillStyle = z.color;
+    ctx.fill();
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.radius * 0.7, 0, Math.PI * 2);
+    ctx.strokeStyle = z.type === 'poison' ? 'rgba(74, 222, 128, 0.75)' : 'rgba(245,158,11,0.8)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
   });
 
   if (isMultiplayer) {
@@ -1040,39 +1117,52 @@ function draw() {
     const lifeProgress = Math.max(0, 1 - (Date.now() - event.createdAt) / ((event.life || 0.8) * 1000));
     if (lifeProgress <= 0) return;
     ctx.save();
+    ctx.shadowBlur = (event.glow || 18) * (0.9 + lifeProgress * 0.8);
+    ctx.shadowColor = event.color;
     if (event.type === 'poison') {
       ctx.beginPath();
-      ctx.arc(event.x, event.y, event.radius * (0.4 + lifeProgress * 0.8), 0, Math.PI * 2);
+      ctx.arc(event.x, event.y, event.radius * (0.55 + lifeProgress * 1.1), 0, Math.PI * 2);
       ctx.fillStyle = event.color;
-      ctx.globalAlpha = 0.25 + lifeProgress * 0.55;
+      ctx.globalAlpha = 0.36 + lifeProgress * 0.6;
       ctx.fill();
+      ctx.beginPath();
+      ctx.arc(event.x, event.y, event.radius * (0.2 + lifeProgress * 0.7), 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(220,252,231,0.9)';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
     } else if (event.type === 'projectile') {
       const dx = event.targetX - event.x;
       const dy = event.targetY - event.y;
       ctx.beginPath();
       ctx.moveTo(event.x, event.y);
-      ctx.lineTo(event.x + dx * (0.2 + lifeProgress * 0.8), event.y + dy * (0.2 + lifeProgress * 0.8));
+      ctx.lineTo(event.x + dx * (0.12 + lifeProgress * 0.88), event.y + dy * (0.12 + lifeProgress * 0.88));
       ctx.strokeStyle = event.color;
-      ctx.lineWidth = 2.5;
-      ctx.globalAlpha = 0.6;
+      ctx.lineWidth = 4;
+      ctx.globalAlpha = 0.95;
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(event.x, event.y, event.radius * (0.5 + lifeProgress * 0.8), 0, Math.PI * 2);
+      ctx.arc(event.x + dx * 0.18, event.y + dy * 0.18, event.radius * (0.9 + lifeProgress * 1.1), 0, Math.PI * 2);
       ctx.fillStyle = event.color;
-      ctx.globalAlpha = 0.55;
+      ctx.globalAlpha = 0.7;
       ctx.fill();
+      ctx.beginPath();
+      ctx.arc(event.x, event.y, event.radius * (1.8 + lifeProgress * 1.4), 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      ctx.lineWidth = 1.6;
+      ctx.globalAlpha = 0.75;
+      ctx.stroke();
     } else {
       ctx.beginPath();
       ctx.moveTo(event.x, event.y);
       ctx.lineTo(event.targetX, event.targetY);
       ctx.strokeStyle = event.color;
-      ctx.lineWidth = 2.5;
-      ctx.globalAlpha = 0.5 + lifeProgress * 0.5;
+      ctx.lineWidth = 4.6;
+      ctx.globalAlpha = 0.9;
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(event.x, event.y, event.radius * (0.4 + lifeProgress * 0.8), 0, Math.PI * 2);
+      ctx.arc(event.x, event.y, event.radius * (0.7 + lifeProgress * 1.2), 0, Math.PI * 2);
       ctx.fillStyle = event.color;
-      ctx.globalAlpha = 0.34 + lifeProgress * 0.5;
+      ctx.globalAlpha = 0.58 + lifeProgress * 0.32;
       ctx.fill();
     }
     ctx.restore();
@@ -1109,9 +1199,64 @@ function draw() {
   }
   ctx.restore();
 
-  bullets.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2); ctx.fillStyle = b.color; ctx.fill(); });
-  enemyProjectiles.forEach(ep => { ctx.beginPath(); ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI*2); ctx.fillStyle = ep.color; ctx.fill(); });
-  lightningStrikes.forEach(l => { ctx.beginPath(); ctx.moveTo(l.x, l.y-280); ctx.lineTo(l.x-12, l.y-140); ctx.lineTo(l.x, l.y); ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 4; ctx.stroke(); });
+  bullets.forEach(b => {
+    ctx.save();
+    ctx.shadowBlur = 24;
+    ctx.shadowColor = b.color;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.radius * 1.7, 0, Math.PI * 2);
+    ctx.fillStyle = b.color;
+    ctx.globalAlpha = 0.96;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.radius * 2.8, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.24)';
+    ctx.globalAlpha = 0.52;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(b.x - (b.vx || 0) * 5, b.y - (b.vy || 0) * 5);
+    ctx.strokeStyle = b.color;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.35;
+    ctx.stroke();
+    ctx.restore();
+  });
+  enemyProjectiles.forEach(ep => {
+    ctx.save();
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = ep.color;
+    ctx.beginPath();
+    ctx.arc(ep.x, ep.y, ep.radius * 1.4, 0, Math.PI * 2);
+    ctx.fillStyle = ep.color;
+    ctx.globalAlpha = 0.88;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(ep.x, ep.y, ep.radius * 2.5, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+  });
+  lightningStrikes.forEach(l => {
+    ctx.save();
+    ctx.shadowBlur = 22;
+    ctx.shadowColor = '#60a5fa';
+    ctx.beginPath();
+    ctx.moveTo(l.x, l.y - 260);
+    ctx.lineTo(l.x - 18, l.y - 150);
+    ctx.lineTo(l.x + 10, l.y - 90);
+    ctx.lineTo(l.x - 4, l.y);
+    ctx.strokeStyle = '#7dd3fc';
+    ctx.lineWidth = 7;
+    ctx.globalAlpha = 0.95;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(l.x, l.y - 90, 10, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(125,211,252,0.9)';
+    ctx.fill();
+    ctx.restore();
+  });
   floatingTexts.forEach(ft => { ctx.font = `bold ${ft.size||14}px 'Courier New'`; ctx.textAlign = 'center'; ctx.fillStyle = ft.color; ctx.fillText(ft.text, ft.x, ft.y); });
 
   ctx.restore();
