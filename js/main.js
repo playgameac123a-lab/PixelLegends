@@ -237,7 +237,7 @@ function resolvePlayerDefeat() {
       floatingTexts.push({ x: player.x, y: player.y - 24, text: `復活！剩餘 ${sharedRevivesRemaining} 次`, color: '#facc15', size: 16, life: 1.5, vy: -1.5 });
       updateHpUI(player.hp, player.maxHp);
       updatePartyReviveDisplay();
-      syncPartyRoomState(true);
+      syncPartyRoomState(false, sharedRevivesRemaining);
       return true;
     }
     triggerPartyFailure();
@@ -315,6 +315,7 @@ function resumeAfterUpgrade() {
 }
 
 function beginUpgradePause() {
+  if (gameState === 'UPGRADE' && upgradePauseDeadline) return;
   upgradePauseDeadline = Date.now() + 30000;
   upgradeReadyPlayers = { ...(upgradeReadyPlayers || {}), [myPeerId]: false };
   updateUpgradeWaitUI();
@@ -323,10 +324,14 @@ function beginUpgradePause() {
   }
 }
 
-function syncPartyRoomState(force = false) {
+function syncPartyRoomState(force = false, revivesOverride = null) {
   if (!isMultiplayer || !currentRoomCode) return;
   const partySize = getPartySize();
-  const nextRevives = Math.max(0, force ? partySize : Number(sharedRevivesRemaining || partySize));
+  const nextRevives = revivesOverride !== null && revivesOverride !== undefined
+    ? Math.max(0, Number(revivesOverride))
+    : force
+      ? Math.max(1, partySize)
+      : Math.max(0, Number(sharedRevivesRemaining || partySize));
   const payload = {
     isPlaying: true,
     mapKey: selectedMapKey,
@@ -369,8 +374,15 @@ function joinLobby(code, asHost) {
     if (status && typeof status.challengeFailed === 'boolean') sharedChallengeFailed = status.challengeFailed;
     if (status && status.upgradeReadyPlayers) upgradeReadyPlayers = { ...status.upgradeReadyPlayers };
     if (status && typeof status.upgradePauseDeadline === 'number') upgradePauseDeadline = status.upgradePauseDeadline;
-    if (status && typeof status.isUpgradePaused === 'boolean' && status.isUpgradePaused && !upgradePauseDeadline && gameState !== 'UPGRADE') {
-      showUpgradeMenu();
+    if (status && typeof status.isUpgradePaused === 'boolean') {
+      if (status.isUpgradePaused && gameState !== 'UPGRADE') {
+        if (typeof status.upgradePauseDeadline === 'number') upgradePauseDeadline = status.upgradePauseDeadline;
+        if (upgradePauseDeadline && Date.now() < upgradePauseDeadline) {
+          showUpgradeMenu();
+        }
+      } else if (!status.isUpgradePaused && gameState === 'UPGRADE') {
+        resumeAfterUpgrade();
+      }
     }
     if (sharedChallengeFailed) {
       triggerPartyFailure();
