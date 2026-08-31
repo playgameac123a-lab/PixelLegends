@@ -619,17 +619,11 @@ function showUpgradeMenu() {
       const nextReady = { ...(upgradeReadyPlayers || {}), [myPeerId]: true };
       upgradeReadyPlayers = nextReady;
       updateUpgradeWaitUI();
-      updateRoomStatus({ upgradeReadyPlayers: nextReady, isUpgradePaused: true, upgradePauseDeadline });
-      const partySize = getPartySize();
-      const allReady = Object.keys(nextReady).length >= partySize;
-      if (allReady || Date.now() >= upgradePauseDeadline) {
-        resumeAfterUpgrade();
-      }
+      updateRoomStatus({ upgradeReadyPlayers: nextReady, isUpgradePaused: false, upgradePauseDeadline: 0 });
+      resumeAfterUpgrade();
       return;
     }
-    setTimeout(() => {
-      resumeAfterUpgrade();
-    }, 30000);
+    resumeAfterUpgrade();
   };
 
   renderUpgradeOptions(selected, finalizeSelection);
