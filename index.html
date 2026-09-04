@@ -9,7 +9,6 @@
     body, html { width: 100%; height: 100%; overflow: hidden; background-color: #030712; font-family: 'Courier New', Courier, -apple-system, sans-serif; color: #f1f5f9; image-rendering: pixelated; }
     #gameCanvas { display: block; width: 100%; height: 100%; background: #05070d; touch-action: none; }
     
-    /* HUD 介面樣式 */
     #hud { position: absolute; top: 0; left: 0; width: 100%; padding: 8px 12px; pointer-events: none; display: none; flex-direction: column; gap: 5px; z-index: 40; }
     .hud-row { display: flex; justify-content: space-between; align-items: center; text-shadow: 0 2px 4px rgba(0,0,0,0.9); }
     .hud-group { display: flex; align-items: center; gap: 6px; }
@@ -27,22 +26,18 @@
     #eventBanner { display: none; background: linear-gradient(90deg, rgba(185, 28, 28, 0.9), rgba(127, 29, 29, 0.9)); color: #fff; text-align: center; font-size: 11px; font-weight: 900; padding: 3px 10px; border-radius: 4px; border: 1px solid #ef4444; animation: pulseEvent 1s infinite alternate; align-self: center; }
     @keyframes pulseEvent { from { transform: scale(0.98); opacity: 0.9; } to { transform: scale(1.02); opacity: 1; } }
     
-    /* 裝備欄與彈幕標籤樣式 */
     #equipmentHud { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
     .equip-slot { width: 26px; height: 26px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 5px; display: flex; align-items: center; justify-content: center; position: relative; }
     .equip-slot canvas { width: 18px; height: 18px; image-rendering: pixelated; }
     .equip-level { position: absolute; bottom: -3px; right: -3px; font-size: 8px; background: #b91c1c; color: #fff; padding: 0 2px; border-radius: 3px; font-weight: bold; }
     .equip-level.evolved { background: #d97706; color: #000; box-shadow: 0 0 5px #d97706; }
     
-    /* 視窗與彈窗 */
-    .screen-overlay, .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.92); backdrop-filter: blur(8px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; padding: 10px; }
+    .screen-overlay, .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.78); backdrop-filter: blur(6px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.18s ease; padding: 10px; }
     .screen-overlay.active, .modal-overlay.active { opacity: 1; pointer-events: auto; }
-    .panel-card { background: #0b1120; border: 2px solid #1e293b; border-radius: 14px; padding: 14px; width: 95%; max-width: 580px; text-align: center; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95); animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2); max-height: 94vh; display: flex; flex-direction: column; touch-action: pan-y; }
-    @keyframes popIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .panel-card { background: #0b1120; border: 2px solid #1e293b; border-radius: 14px; padding: 14px; width: 95%; max-width: 580px; text-align: center; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95); animation: popIn 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.2); max-height: 94vh; display: flex; flex-direction: column; touch-action: pan-y; }
+    @keyframes popIn { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     .panel-title { font-size: 18px; font-weight: 900; margin-bottom: 3px; color: #38bdf8; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .panel-desc { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
-    .upgrade-wait-status { display: none; margin: 0 0 8px; padding: 6px 10px; border-radius: 8px; background: rgba(13, 65, 94, 0.7); border: 1px solid rgba(56, 189, 248, 0.35); color: #bae6fd; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
-    .upgrade-wait-status.visible { display: block; }
     .menu-btn-grid { display: grid; grid-template-columns: 1fr; gap: 7px; width: 100%; }
     .action-btn { background: linear-gradient(135deg, #0369a1, #075985); color: #ffffff; border: 1px solid rgba(255,255,255,0.18); padding: 10px 14px; font-size: 13px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: transform 0.08s ease; }
     .action-btn:active { transform: scale(0.97); }
@@ -53,7 +48,6 @@
     .action-btn.secondary { background: #131d31; border-color: #334155; }
     .action-btn:disabled { opacity: 0.45; filter: grayscale(0.8); cursor: not-allowed; }
 
-    /* 角色舞台與卡片 */
     .hero-stage { background: radial-gradient(circle at center, rgba(56, 189, 248, 0.12) 0%, rgba(11, 17, 32, 0.8) 80%); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; text-align: left; }
     .hero-preview-box { width: 68px; height: 68px; background: rgba(15, 23, 42, 0.9); border: 2px solid #38bdf8; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 15px rgba(56, 189, 248, 0.35); }
     .hero-preview-canvas { width: 48px; height: 48px; animation: heroFloat 2s ease-in-out infinite; }
@@ -74,7 +68,8 @@
     .select-card { background: #131d31; border: 2px solid #1e293b; padding: 10px; border-radius: 10px; cursor: pointer; text-align: left; }
     .select-card.active { border-color: #38bdf8; background: #0c395b; }
     .skill-list, .talent-list, .achievement-list { display: flex; flex-direction: column; gap: 7px; width: 100%; max-height: 52vh; overflow-y: auto; }
-    .skill-card { display: flex; align-items: center; gap: 10px; background: #131d31; border: 1px solid #1e293b; padding: 8px 10px; border-radius: 8px; cursor: pointer; text-align: left; }
+    .skill-card { display: flex; align-items: center; gap: 10px; background: #131d31; border: 1px solid #1e293b; padding: 8px 10px; border-radius: 8px; cursor: pointer; text-align: left; transition: transform 0.08s ease, border-color 0.1s ease; }
+    .skill-card:hover, .skill-card:active { border-color: #38bdf8; transform: scale(0.99); }
     .skill-card.evolve { background: linear-gradient(135deg, #1e1b4b, #0f172a); border-color: #d97706; }
     .skill-icon-box { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; flex-shrink: 0; }
     .skill-info { flex: 1; }
@@ -94,13 +89,11 @@
     #joystickBase { position: absolute; width: 90px; height: 90px; border-radius: 50%; background: rgba(255, 255, 255, 0.06); border: 2px solid rgba(255, 255, 255, 0.2); transform: translate(-50%, -50%); display: none; }
     #joystickStick { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #38bdf8, #0369a1); transform: translate(-50%, -50%); display: none; }
 
-    /* 像素圖標專用 CSS */
     .pixel-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; width: 16px; height: 16px; margin-right: 4px; }
     .pixel-icon canvas { image-rendering: pixelated; max-width: 100%; max-height: 100%; }
     .badge .pixel-icon { width: 12px; height: 12px; margin-right: 2px; }
     .action-btn .pixel-icon { width: 18px; height: 18px; margin-right: 6px; }
 
-    /* 自訂無侵入式通知彈窗 (代替 window.alert) */
     #customToastModal { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; pointer-events: none; opacity: 0; transition: opacity 0.25s ease, transform 0.25s ease; width: 90%; max-width: 420px; }
     #customToastModal.active { opacity: 1; transform: translateX(-50%) translateY(10px); pointer-events: auto; }
     .toast-box { background: #0f172a; border: 2px solid #38bdf8; border-radius: 10px; padding: 12px 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -144,7 +137,6 @@
     </div>
   </div>
 
-  <!-- 主選單 -->
   <div class="screen-overlay active" id="mainMenuScreen">
     <div class="panel-card">
       <div class="panel-title"><i class="pixel-icon" data-icon="ui_shield"></i> 像素傳奇倖存者：諸神黃昏</div>
@@ -164,7 +156,6 @@
     </div>
   </div>
 
-  <!-- 多人連線模式入口 -->
   <div class="screen-overlay" id="multiMatchScreen">
     <div class="panel-card">
       <div class="panel-title" style="color:#c084fc;"><i class="pixel-icon" data-icon="ui_globe"></i> 多人連線模式</div>
@@ -179,7 +170,6 @@
     </div>
   </div>
 
-  <!-- 多人房間大廳 -->
   <div class="screen-overlay" id="multiLobbyScreen">
     <div class="panel-card">
       <div class="panel-title" style="color:#a855f7;"><span>房間大廳：</span><span id="lobbyRoomCodeText" style="color:#facc15; letter-spacing:2px; text-decoration:underline;">------</span></div>
@@ -196,7 +186,6 @@
     </div>
   </div>
 
-  <!-- 其他 Modal (選角、關卡、天賦、升級、結算) -->
   <div class="screen-overlay" id="charSelectScreen">
     <div class="panel-card">
       <div class="panel-title"><i class="pixel-icon" data-icon="ui_hero"></i> 選擇出戰英雄</div>
@@ -241,11 +230,11 @@
     </div>
   </div>
 
+  <!-- 升級選單：無 30 秒等待限制，即選即升級 -->
   <div class="modal-overlay" id="upgradeModal">
     <div class="panel-card">
       <div class="panel-title" id="upgradeTitle">⚡ 等級突破！</div>
-      <div class="panel-desc">選擇一項強化 (按 1/2/3 鍵快速選擇)：</div>
-      <div class="upgrade-wait-status" id="upgradeWaitStatus">等待隊友選擇升級中...</div>
+      <div class="panel-desc">選擇一項強化 (按 1 / 2 / 3 鍵或點擊卡片快速選擇)：</div>
       <div class="skill-list" id="skillOptionsList"></div>
     </div>
   </div>
@@ -419,7 +408,6 @@
       PixelIconCache.candle = createPixelSprite(["..C..", ".CCC.", "..C..", "..C..", ".C.C.", ".C.C.", "..C.."], { 'C': '#facc15' }, 3);
       PixelIconCache.duplicator = createPixelSprite([".RRR.", "R...R", "R.R.R", "R...R", ".RRR.", "..R.."], { 'R': '#c084fc' }, 3);
 
-      // UI
       PixelIconCache.ui_play = createPixelSprite(["...WWW..", "..WWWW..", "..WWW...", ".YYW....", "YYYY....", ".YY....."], {'W': '#e2e8f0', 'Y': '#facc15'}, 2);
       PixelIconCache.ui_skull = createPixelSprite([".WWWW.", "WKKWKW", "WWWWWW", ".WWWW.", ".W..W."], {'W': '#c084fc', 'K': '#3b0764'}, 2);
       PixelIconCache.ui_gold = PixelIconCache.gold_coin;
@@ -527,6 +515,7 @@
     let gameState = 'MENU', lastTime = performance.now();
     const camera = { x: 0, y: 0 };
     let player = {}, enemies = [], bullets = [], enemyProjectiles = [], gems = [], particles = [], floatingTexts = [], lightningStrikes = [], groundZones = [];
+    let specialVisualEffects = [];
     let sessionGold = 120, totalKills = 0, killCount = 0, highestWave = 1, currentWave = 1, waveTimer = 40;
     let sharedPartyExp = 0, sharedPartyGold = 0, sharedRevivesRemaining = 1, sharedDrops = [], sharedChallengeFailed = false;
     let roomCombatEvents = [];
@@ -536,13 +525,18 @@
     let isMultiplayer = false, isRoomHost = false, isMyReady = false, currentRoomCode = '';
     let isLeavingRoom = false;
     let lobbyPlayers = {}, peers = {}, syncTimer = 0, enemySyncTimer = 0;
-    let upgradePauseDeadline = 0, upgradeReadyPlayers = {};
     let upgradeSelectionLocked = false;
     let pendingUpgradeCount = 0;
     let myPeerId = 'hero_' + Math.random().toString(36).substring(2, 6);
     let myName = '勇者#' + myPeerId.substring(5);
 
-    // Multi-tab / BroadcastChannel fallback for multi-player instant preview
+    // 戰鬥命中與技能彈幕同步緩衝
+    let myPendingHits = [];
+    let myPendingAttacks = [];
+    const processedHitIds = new Set();
+    const processedAttackIds = new Set();
+    let lastProcessedCombatEventTime = 0;
+
     const localBroadcast = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('pixel_legends_ragnarok_bc') : null;
 
     const keys = { w: false, a: false, s: false, d: false, 1: false, 2: false, 3: false };
@@ -900,6 +894,7 @@
       }
     }
 
+    // 接收本地跨分頁訊息
     if (localBroadcast) {
       localBroadcast.onmessage = (e) => {
         const msg = e.data;
@@ -909,19 +904,152 @@
           if (!peers[p.id]) peers[p.id] = { ...p, currentX: p.x, currentY: p.y, targetX: p.x, targetY: p.y, lastSeen: Date.now() };
           else {
             peers[p.id].targetX = p.x; peers[p.id].targetY = p.y;
-            peers[p.id].hp = p.hp; peers[p.id].facingX = p.facingX;
+            peers[p.id].hp = p.hp; peers[p.id].maxHp = p.maxHp;
+            peers[p.id].facingX = p.facingX;
             peers[p.id].attackPulse = p.attackPulse;
+            peers[p.id].orbsInfo = p.orbsInfo;
             peers[p.id].lastSeen = Date.now();
           }
+          if (isRoomHost && Array.isArray(p.pendingHits)) {
+            p.pendingHits.forEach(hit => processIncomingHit(hit));
+          }
         } else if (msg.type === 'COMBAT_HIT' && isRoomHost) {
-          // Guest hits an enemy, applied on host!
-          const { enemyId, damage, color } = msg.payload;
-          const target = enemies.find(en => en.id === enemyId && !en.dead);
-          if (target) damageEnemy(target, damage, color);
+          processIncomingHit(msg.payload);
+        } else if (msg.type === 'COMBAT_ATTACK') {
+          if (msg.payload && msg.payload.attack) {
+            const att = msg.payload.attack;
+            if (!processedAttackIds.has(att.id)) {
+              processedAttackIds.add(att.id);
+              applyPeerAttack(msg.senderId, att);
+            }
+          }
         } else if (msg.type === 'ENEMY_SYNC' && !isRoomHost) {
           applyRemoteEnemies(msg.payload.enemies);
         }
       };
+    }
+
+    function processIncomingHit(hit) {
+      if (!hit || !hit.id || processedHitIds.has(hit.id)) return;
+      processedHitIds.add(hit.id);
+      if (processedHitIds.size > 250) {
+        const first = processedHitIds.values().next().value;
+        processedHitIds.delete(first);
+      }
+
+      let target = enemies.find(en => en.id === hit.enemyId && !en.dead);
+      if (!target && hit.x !== undefined && hit.y !== undefined) {
+        let minD = 85;
+        enemies.forEach(en => {
+          if (!en.dead) {
+            const d = Math.hypot(en.x - hit.x, en.y - hit.y);
+            if (d < minD) { minD = d; target = en; }
+          }
+        });
+      }
+      if (target) {
+        damageEnemy(target, hit.dmg, hit.color || '#38bdf8', false);
+      }
+    }
+
+    function recordOutgoingAttack(data) {
+      if (!isMultiplayer) return;
+      const attackObj = {
+        ...data,
+        id: `${myPeerId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        t: Date.now()
+      };
+      myPendingAttacks.push(attackObj);
+      broadcastLocal('COMBAT_ATTACK', { attack: attackObj });
+    }
+
+    function applyPeerAttack(peerId, att) {
+      const p = peers[peerId];
+      const px = p ? p.currentX : (att.x || player.x);
+      const py = p ? p.currentY : (att.y || player.y);
+
+      if (att.type === 'wand') {
+        const a = att.angle;
+        for (let i = 0; i < (att.count || 1); i++) {
+          bullets.push({
+            x: px, y: py,
+            vx: Math.cos(a + i * 0.16) * 9, vy: Math.sin(a + i * 0.16) * 9,
+            radius: att.evolved ? 7 : 5,
+            color: att.evolved ? '#f59e0b' : '#38bdf8',
+            damage: 0, pierce: 1, life: 1.8, isPeerBullet: true
+          });
+        }
+      } else if (att.type === 'daggers') {
+        const a = att.angle;
+        const cnt = att.count || 3;
+        for (let i = 0; i < cnt; i++) {
+          const ang = att.evolved ? (i / 12) * Math.PI * 2 : a + (i - (cnt - 1) / 2) * 0.12;
+          bullets.push({
+            x: px, y: py,
+            vx: Math.cos(ang) * 12, vy: Math.sin(ang) * 12,
+            radius: att.evolved ? 6 : 4,
+            color: att.evolved ? '#a855f7' : '#e2e8f0',
+            damage: 0, pierce: 1, life: 1.5, isPeerBullet: true
+          });
+        }
+      } else if (att.type === 'thunder') {
+        if (att.strikes && Array.isArray(att.strikes)) {
+          att.strikes.forEach(s => { lightningStrikes.push({ x: s.x, y: s.y, life: 0.18 }); });
+        }
+        playSound('explosion');
+      } else if (att.type === 'whip') {
+        specialVisualEffects.push({
+          type: 'whip', x: px, y: py, angle: att.angle, radius: att.evolved ? 170 : 120,
+          life: 0.22, maxLife: 0.22, color: att.evolved ? '#ef4444' : '#f87171'
+        });
+      } else if (att.type === 'bow') {
+        bullets.push({
+          x: px, y: py,
+          vx: Math.cos(att.angle) * 15, vy: Math.sin(att.angle) * 15,
+          radius: att.evolved ? 9 : 5,
+          color: '#fde047', damage: 0, pierce: 1, life: 1.8, isPeerBullet: true
+        });
+      } else if (att.type === 'laser') {
+        specialVisualEffects.push({
+          type: 'laser', x1: px, y1: py,
+          x2: px + Math.cos(att.angle) * 700, y2: py + Math.sin(att.angle) * 700,
+          life: 0.18, maxLife: 0.18, color: '#38bdf8', width: att.evolved ? 10 : 6
+        });
+        playSound('laser');
+      } else if (att.type === 'firering') {
+        specialVisualEffects.push({
+          type: 'firering', x: px, y: py, radius: att.radius || 140,
+          life: 0.35, maxLife: 0.35, color: '#f97316'
+        });
+      } else if (att.type === 'frost') {
+        specialVisualEffects.push({
+          type: 'frost', x: px, y: py, radius: att.radius || 100,
+          life: 0.3, maxLife: 0.3, color: '#67e8f9'
+        });
+      } else if (att.type === 'spear') {
+        const angles = att.evolved ? [0, 0.78, 1.57, 2.35, 3.14, 3.92, 4.71, 5.49] : [-0.8, -0.3, 0.3, 0.8];
+        angles.forEach(a => {
+          bullets.push({
+            x: px, y: py,
+            vx: Math.cos(a) * 12, vy: Math.sin(a) * 12,
+            radius: att.evolved ? 9 : 5.5,
+            color: '#facc15', damage: 0, pierce: 1, life: 1.4, isPeerBullet: true
+          });
+        });
+      } else if (att.type === 'skull') {
+        const dist = Math.max(1, Math.hypot(att.targetX - px, att.targetY - py));
+        bullets.push({
+          x: px, y: py,
+          vx: ((att.targetX - px) / dist) * 10, vy: ((att.targetY - py) / dist) * 10,
+          radius: att.evolved ? 10 : 6,
+          color: '#c084fc', damage: 0, pierce: 1, life: 1.8, isPeerBullet: true, type: 'skull'
+        });
+      } else if (att.type === 'flask') {
+        groundZones.push({
+          x: att.x, y: att.y, radius: att.radius || 75,
+          type: 'poison', damage: 0, life: 4.5, color: 'rgba(34,197,94,0.3)', isPeerZone: true
+        });
+      }
     }
 
     async function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost = false) {
@@ -941,7 +1069,7 @@
           }
           const initialStatus = {
             isPlaying: false, mapKey: selectedMapKey, revivesRemaining: 1, partyExp: 0, partyGold: 0,
-            drops: [], challengeFailed: false, upgradeReadyPlayers: {}, isUpgradePaused: false, upgradePauseDeadline: 0
+            drops: [], challengeFailed: false, combatEvents: []
           };
           await set(currentRoomRef, { status: initialStatus, players: {} });
         } else if (!roomSnapshot.exists()) {
@@ -959,8 +1087,7 @@
 
         return { ok: true, roomCode };
       } catch (error) {
-        console.warn('Realtime database offline or restricted, running in local fallback mode:', error);
-        // Local multi-tab fallback
+        console.warn('Realtime database 離線或受限，啟用本機分頁連線模式:', error);
         setTimeout(() => {
           onRoomUpdate({ [myPeerId]: playerData }, { isPlaying: false, mapKey: selectedMapKey });
         }, 50);
@@ -977,10 +1104,41 @@
     }
 
     function syncPlayerPosition(x, y, hp, facingX, level, maxHp, attackPulse = 0) {
-      if (myPlayerRef) {
-        updateDb(myPlayerRef, { x, y, hp, maxHp, facingX, level, attackPulse, lastSeen: Date.now() }).catch(()=>{});
+      const payload = {
+        x: Math.round(x),
+        y: Math.round(y),
+        hp: Math.round(hp),
+        maxHp: Math.round(maxHp),
+        facingX: facingX < 0 ? -1 : 1,
+        level,
+        attackPulse,
+        lastSeen: Date.now()
+      };
+
+      if (myPendingHits.length > 0) {
+        payload.pendingHits = myPendingHits.splice(0, 8);
       }
-      broadcastLocal('PLAYER_MOVE', { id: myPeerId, x, y, hp, maxHp, facingX, level, attackPulse });
+      if (myPendingAttacks.length > 0) {
+        payload.pendingAttacks = myPendingAttacks.splice(0, 8);
+      }
+
+      const o = WEAPONS.orbs;
+      if (o.level > 0) {
+        payload.orbsInfo = {
+          active: true,
+          evolved: o.evolved,
+          count: (o.evolved ? 6 : 2 + o.level) + PASSIVES.duplicator.level,
+          radius: Math.round((o.evolved ? 110 : 75) * (1 + PASSIVES.candle.level * 0.25)),
+          angle: Number(player.orbAngle.toFixed(2))
+        };
+      } else {
+        payload.orbsInfo = { active: false };
+      }
+
+      if (myPlayerRef) {
+        updateDb(myPlayerRef, payload).catch(()=>{});
+      }
+      broadcastLocal('PLAYER_MOVE', { id: myPeerId, ...payload });
     }
 
     function syncLobbyState(isReady, heroKey) {
@@ -1001,7 +1159,6 @@
 
     function syncPartyRoomState(force = false) {
       if (!isMultiplayer || !currentRoomCode) return;
-      const partySize = getPartySize();
       const payload = {
         isPlaying: true,
         mapKey: selectedMapKey,
@@ -1010,13 +1167,16 @@
         partyGold: Number(sharedPartyGold || sessionGold || 0),
         drops: Array.isArray(sharedDrops) ? sharedDrops.slice(-50) : [],
         challengeFailed: sharedChallengeFailed,
-        isUpgradePaused: !!upgradePauseDeadline,
-        upgradePauseDeadline: upgradePauseDeadline || 0
+        combatEvents: roomCombatEvents.slice(-20)
       };
+
       if (isRoomHost) {
         payload.enemies = enemies.filter(enemy => enemy && !enemy.dead).map(enemy => ({
-          id: enemy.id, x: enemy.x, y: enemy.y, type: enemy.type, hp: enemy.hp, maxHp: enemy.maxHp,
-          speed: enemy.speed, radius: enemy.radius, damage: enemy.damage, slowTimer: enemy.slowTimer || 0, poisonTimer: enemy.poisonTimer || 0
+          id: enemy.id, x: Math.round(enemy.x), y: Math.round(enemy.y), type: enemy.type,
+          hp: Math.round(enemy.hp), maxHp: Math.round(enemy.maxHp),
+          speed: enemy.speed, radius: enemy.radius, damage: enemy.damage,
+          slowTimer: enemy.slowTimer || 0, poisonTimer: enemy.poisonTimer || 0,
+          isBoss: !!enemy.isBoss
         }));
         broadcastLocal('ENEMY_SYNC', { enemies: payload.enemies });
       }
@@ -1031,7 +1191,9 @@
         let e = existingMap.get(re.id);
         if (e) {
           e.x = re.x; e.y = re.y; e.hp = re.hp; e.maxHp = re.maxHp;
+          e.type = re.type; e.radius = re.radius; e.damage = re.damage;
           e.slowTimer = re.slowTimer || 0; e.poisonTimer = re.poisonTimer || 0;
+          e.isBoss = !!re.isBoss;
           nextList.push(e);
         } else {
           nextList.push({ ...re, dead: false });
@@ -1074,21 +1236,19 @@
       showScreen('endModal');
     }
 
+    // 升級完成後直接恢復遊戲，不卡頓、不等待 30 秒
     function resumeAfterUpgrade() {
-      upgradePauseDeadline = 0;
-      upgradeReadyPlayers = {};
       upgradeSelectionLocked = false;
-      const waitEl = document.getElementById('upgradeWaitStatus');
-      if (waitEl) waitEl.classList.remove('visible');
-      showScreen(null);
-      gameState = 'PLAYING';
-      lastTime = performance.now();
-
-      // Check if another level up is queued
       if (pendingUpgradeCount > 0) {
         pendingUpgradeCount--;
-        setTimeout(() => showUpgradeMenu(), 150);
+        gameState = 'PLAYING';
+        showUpgradeMenu();
+        return;
       }
+      showScreen(null);
+      gameState = 'PLAYING';
+      player.invulnerableTimer = Math.max(player.invulnerableTimer, 1.5);
+      lastTime = performance.now();
     }
 
     function showLobbyUI() {
@@ -1181,12 +1341,28 @@
         if (status && Array.isArray(status.enemies) && isMultiplayer && !isRoomHost) {
           applyRemoteEnemies(status.enemies);
         }
-        if (status && status.isPlaying && gameState !== 'PLAYING') {
+
+        // 客端同步顯示房主傳來的戰鬥打擊數字與音效
+        if (status && Array.isArray(status.combatEvents) && !isRoomHost) {
+          status.combatEvents.forEach(evt => {
+            if (evt && evt.t > lastProcessedCombatEventTime) {
+              const isMyHit = myPendingHits.some(h => Math.abs(h.t - evt.t) < 300 && h.enemyId === evt.enemyId);
+              if (!isMyHit) {
+                floatingTexts.push({ x: evt.x, y: evt.y - 10, text: evt.dmg, color: evt.color || '#38bdf8', size: 14, life: 0.6, vy: -1.2 });
+                playSound('hit');
+              }
+            }
+          });
+          if (status.combatEvents.length > 0) {
+            lastProcessedCombatEventTime = Math.max(...status.combatEvents.map(e => e.t || 0), lastProcessedCombatEventTime);
+          }
+        }
+
+        if (status && status.isPlaying && (gameState === 'MENU' || gameState === 'MATCH')) {
           selectedMapKey = status.mapKey || 'dungeon';
           isMultiplayer = true;
           startGame();
         } else {
-          // Update peers
           const now = Date.now();
           Object.keys(playersData).forEach(id => {
             if (id === myPeerId) return;
@@ -1195,9 +1371,30 @@
               peers[id] = { ...remote, currentX: remote.x, currentY: remote.y, targetX: remote.x, targetY: remote.y, lastSeen: now };
             } else {
               peers[id].targetX = remote.x; peers[id].targetY = remote.y;
-              peers[id].hp = remote.hp; peers[id].facingX = remote.facingX;
+              peers[id].hp = remote.hp; peers[id].maxHp = remote.maxHp;
+              peers[id].facingX = remote.facingX;
               peers[id].attackPulse = remote.attackPulse || 0;
+              peers[id].orbsInfo = remote.orbsInfo;
               peers[id].lastSeen = now;
+            }
+
+            // 房主即時結算遠端隊員的攻擊
+            if (isRoomHost && Array.isArray(remote.pendingHits)) {
+              remote.pendingHits.forEach(hit => processIncomingHit(hit));
+            }
+
+            // 同步隊員施放之彈幕技能動畫
+            if (Array.isArray(remote.pendingAttacks)) {
+              remote.pendingAttacks.forEach(att => {
+                if (!processedAttackIds.has(att.id)) {
+                  processedAttackIds.add(att.id);
+                  if (processedAttackIds.size > 250) {
+                    const first = processedAttackIds.values().next().value;
+                    processedAttackIds.delete(first);
+                  }
+                  applyPeerAttack(id, att);
+                }
+              });
             }
           });
           if (gameState === 'MENU') showLobbyUI();
@@ -1223,17 +1420,17 @@
       if (pauseBtn) pauseBtn.innerHTML = '<i class="pixel-icon" data-icon="ui_pause"></i>';
       peers = {};
 
-      enemies = []; bullets = []; enemyProjectiles = []; gems = []; particles = []; floatingTexts = []; groundZones = []; lightningStrikes = [];
+      enemies = []; bullets = []; enemyProjectiles = []; gems = []; particles = []; floatingTexts = []; groundZones = []; lightningStrikes = []; specialVisualEffects = [];
+      myPendingHits = []; myPendingAttacks = []; roomCombatEvents = [];
       killCount = 0; currentWave = 1; waveTimer = 40; enemySpawnCounter = 0; pendingUpgradeCount = 0;
 
       const hero = HEROES[selectedHeroKey];
-      // Trait bonuses
       let hpMult = 1 + Talents.hp.level * Talents.hp.value;
-      if (hero.id === 'knight') hpMult *= 1.2; // 亞瑟: +20% HP
+      if (hero.id === 'knight') hpMult *= 1.2;
       const hpBase = hero.baseHp * hpMult;
 
       let spdMult = 1 + Talents.speed.level * Talents.speed.value;
-      if (hero.id === 'rogue') spdMult *= 1.2; // 影刃: +20% Speed
+      if (hero.id === 'rogue') spdMult *= 1.2;
 
       player = { 
         x: 0, y: 0, size: 24, hp: hpBase, maxHp: hpBase,
@@ -1271,14 +1468,13 @@
       const map = MAPS[selectedMapKey] || MAPS.dungeon;
       const angle = Math.random() * Math.PI * 2, dist = Math.max(window.innerWidth, window.innerHeight) * 0.65 + 50;
       
-      // Boss check on Wave 10, 25, 50, 100
       const isBossWave = (currentWave % 10 === 0);
       const isBossSpawned = enemies.some(e => e.isBoss && !e.dead);
 
       if (isBossWave && !isBossSpawned) {
         const bossHp = 800 * (1 + currentWave * 0.5) * map.enemyHp;
         enemies.push({
-          id: `boss_${Date.now()}`,
+          id: `boss_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
           isBoss: true,
           x: player.x + Math.cos(angle)*dist,
           y: player.y + Math.sin(angle)*dist,
@@ -1316,18 +1512,32 @@
       });
     }
 
-    function damageEnemy(e, dmg, color = '#fff') {
+    function damageEnemy(e, dmg, color = '#fff', isLocal = true) {
       if (!e || e.dead) return;
       e.hp -= dmg;
       floatingTexts.push({ x: e.x, y: e.y - 10, text: Math.round(dmg), color, size: 14, life: 0.6, vy: -1.2 });
       playSound('hit');
 
-      // Guest damage sync to host
-      if (isMultiplayer && !isRoomHost) {
-        broadcastLocal('COMBAT_HIT', { enemyId: e.id, damage: dmg, color });
+      if (isMultiplayer) {
+        if (isLocal) {
+          const hitPayload = {
+            id: `${myPeerId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+            enemyId: e.id,
+            dmg: Math.round(dmg),
+            color,
+            x: Math.round(e.x),
+            y: Math.round(e.y),
+            t: Date.now()
+          };
+          myPendingHits.push(hitPayload);
+          broadcastLocal('COMBAT_HIT', hitPayload);
+        }
+        if (isRoomHost) {
+          roomCombatEvents.push({ enemyId: e.id, x: Math.round(e.x), y: Math.round(e.y), dmg: Math.round(dmg), color, t: Date.now() });
+          if (roomCombatEvents.length > 30) roomCombatEvents.shift();
+        }
       }
 
-      // Hero: 希瓦娜 (Frost) slows on every attack
       if (selectedHeroKey === 'frost') {
         e.slowTimer = Math.max(e.slowTimer || 0, 1.5);
       }
@@ -1335,14 +1545,12 @@
       if (e.hp <= 0 && !e.dead) {
         e.dead = true; killCount++; totalKills++;
 
-        // Hero: 弗拉德 (Vampire) 6% lifesteal
         if (selectedHeroKey === 'vampire' && Math.random() < 0.06) {
           player.hp = Math.min(player.maxHp, player.hp + 1);
           updateHpUI(player.hp, player.maxHp);
           floatingTexts.push({ x: player.x, y: player.y - 20, text: '+1 HP', color: '#ef4444', size: 13, life: 0.8, vy: -1 });
         }
 
-        // Hero: 格里姆 (Grim) spawns homing wisp
         if (selectedHeroKey === 'grim' && Math.random() < 0.35) {
           bullets.push({
             x: e.x, y: e.y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
@@ -1400,10 +1608,10 @@
       if (gameState === 'UPGRADE') return;
       gameState = 'UPGRADE';
       upgradeSelectionLocked = false;
+      player.invulnerableTimer = Math.max(player.invulnerableTimer, 2.5);
       playSound('levelup');
       const options = [];
 
-      // Evolution options
       Object.keys(WEAPONS).forEach(k => {
         const w = WEAPONS[k];
         if (w.level >= w.maxLevel && !w.evolved && PASSIVES[w.requiredPassive]?.level >= 1) {
@@ -1472,16 +1680,13 @@
     function updateWeapons(dt) {
       const dmgBonus = player.damageMult * (1 + PASSIVES.power.level * 0.2);
       const cdBonus = player.cooldownMult * Math.max(0.35, 1 - PASSIVES.tome.level * 0.12);
-      // Cyborg trait + passives
       const extra = PASSIVES.duplicator.level + (selectedHeroKey === 'cyborg' ? 1 : 0);
-      // Alchemist trait + candle passive
       const area = (1 + PASSIVES.candle.level * 0.25) * (selectedHeroKey === 'alchemist' ? 1.3 : 1.0);
-      // Ranger trait pierce bonus
       const heroPierce = selectedHeroKey === 'ranger' ? 1 : 0;
 
       const activeEnemies = enemies.filter(e => !e.dead);
 
-      // 1. 奧術飛彈 (Wand)
+      // 1. 奧術飛彈
       const w = WEAPONS.wand;
       if (w.level > 0) {
         w.timer += dt;
@@ -1500,10 +1705,11 @@
               life: 1.8
             });
           }
+          recordOutgoingAttack({ type: 'wand', angle: a, count: cnt, evolved: w.evolved });
         }
       }
 
-      // 2. 聖靈光球 (Orbs)
+      // 2. 聖靈光球
       const o = WEAPONS.orbs;
       if (o.level > 0) {
         player.orbAngle += (o.evolved ? 4.5 : 2.5) * dt;
@@ -1523,7 +1729,7 @@
         }
       }
 
-      // 3. 幻影飛刀 (Daggers)
+      // 3. 幻影飛刀
       const d = WEAPONS.daggers;
       if (d.level > 0) {
         d.timer += dt;
@@ -1543,10 +1749,11 @@
               life: 1.5
             });
           }
+          recordOutgoingAttack({ type: 'daggers', angle: a, count: cnt, evolved: d.evolved });
         }
       }
 
-      // 4. 落雷術 (Thunder) - 索爾 bonus
+      // 4. 落雷術
       const t = WEAPONS.thunder;
       if (t.level > 0) {
         t.timer += dt;
@@ -1554,20 +1761,29 @@
         if (t.timer >= (t.evolved ? 0.50 : Math.max(0.65, 2.0 - t.level * 0.25)) * cdBonus && activeEnemies.length > 0) {
           t.timer = 0; player.attackPulse = 0.2;
           const cnt = (t.evolved ? 8 : 1 + Math.floor(t.level / 2)) + extra;
+          const strikes = [];
           [...activeEnemies].sort(() => 0.5 - Math.random()).slice(0, cnt).forEach(e => {
             damageEnemy(e, (t.evolved ? 140 : 50 + t.level * 22) * dmgBonus * stormMult, '#38bdf8');
             lightningStrikes.push({ x: e.x, y: e.y, life: 0.18 });
+            strikes.push({ x: Math.round(e.x), y: Math.round(e.y) });
           });
+          recordOutgoingAttack({ type: 'thunder', strikes });
         }
       }
 
-      // 5. 血色荊棘 (Whip)
+      // 5. 血色荊棘
       const wW = WEAPONS.whip;
       if (wW.level > 0) {
         wW.timer += dt;
         if (wW.timer >= (wW.evolved ? 0.40 : Math.max(0.50, 1.2 - wW.level * 0.12)) * cdBonus) {
           wW.timer = 0; player.attackPulse = 0.22;
           const angle = Math.atan2(player.facingY || 0, player.facingX || 1);
+          specialVisualEffects.push({
+            type: 'whip', x: player.x, y: player.y, angle, radius: (wW.evolved ? 170 : 120) * area,
+            life: 0.22, maxLife: 0.22, color: wW.evolved ? '#ef4444' : '#f87171'
+          });
+          recordOutgoingAttack({ type: 'whip', angle, evolved: wW.evolved });
+
           enemies.forEach(e => {
             if (e.dead) return;
             const dx = e.x - player.x, dy = e.y - player.y;
@@ -1581,7 +1797,7 @@
         }
       }
 
-      // 6. 神聖長弓 (Bow)
+      // 6. 神聖長弓
       const b = WEAPONS.bow;
       if (b.level > 0) {
         b.timer += dt;
@@ -1597,10 +1813,11 @@
             pierce: (b.evolved ? 999 : 2 + b.level) + heroPierce,
             life: 1.8
           });
+          recordOutgoingAttack({ type: 'bow', angle: a, evolved: b.evolved });
         }
       }
 
-      // 7. 劇毒藥劑 (Flask)
+      // 7. 劇毒藥劑
       const f = WEAPONS.flask;
       if (f.level > 0) {
         f.timer += dt;
@@ -1614,10 +1831,11 @@
             damage: (f.evolved ? 28 : 12 + f.level * 7) * dmgBonus,
             life: 5, color: 'rgba(34,197,94,0.3)'
           });
+          recordOutgoingAttack({ type: 'flask', x: Math.round(target.x), y: Math.round(target.y), radius: Math.round((f.evolved ? 120 : 75) * area) });
         }
       }
 
-      // 8. 烈焰之環 (Firering) - 艾格尼斯 bonus
+      // 8. 烈焰之環
       const fr = WEAPONS.firering;
       if (fr.level > 0) {
         fr.timer += dt;
@@ -1625,6 +1843,12 @@
         if (fr.timer >= (fr.evolved ? 0.95 : 2.2 - fr.level * 0.2) * cdBonus) {
           fr.timer = 0;
           const rng = (fr.evolved ? 240 : 130) * area;
+          specialVisualEffects.push({
+            type: 'firering', x: player.x, y: player.y, radius: rng,
+            life: 0.35, maxLife: 0.35, color: '#f97316'
+          });
+          recordOutgoingAttack({ type: 'firering', radius: rng, evolved: fr.evolved });
+
           enemies.forEach(e => {
             if(!e.dead && Math.hypot(e.x - player.x, e.y - player.y) < rng) {
               damageEnemy(e, (fr.evolved ? 95 : 30 + fr.level * 12) * dmgBonus * ignisMult, '#f97316');
@@ -1633,13 +1857,19 @@
         }
       }
 
-      // 9. 極寒霜星 (Frost)
+      // 9. 極寒霜星
       const frst = WEAPONS.frost;
       if (frst.level > 0) {
         frst.timer += dt;
         if (frst.timer >= (frst.evolved ? 0.9 : Math.max(1.2, 2.0 - frst.level * 0.15)) * cdBonus) {
           frst.timer = 0;
           const radius = (frst.evolved ? 160 : 95) * area;
+          specialVisualEffects.push({
+            type: 'frost', x: player.x, y: player.y, radius,
+            life: 0.3, maxLife: 0.3, color: '#67e8f9'
+          });
+          recordOutgoingAttack({ type: 'frost', radius, evolved: frst.evolved });
+
           enemies.forEach(e => {
             if (!e.dead && Math.hypot(e.x - player.x, e.y - player.y) < radius) {
               damageEnemy(e, (frst.evolved ? 88 : 18 + frst.level * 10) * dmgBonus, '#67e8f9');
@@ -1649,7 +1879,7 @@
         }
       }
 
-      // 10. 離子射線 (Laser)
+      // 10. 離子射線
       const l = WEAPONS.laser;
       if (l.level > 0) {
         l.timer += dt;
@@ -1667,10 +1897,16 @@
             pierce: (l.evolved ? 9 : 4) + heroPierce,
             life: 1.5
           });
+          specialVisualEffects.push({
+            type: 'laser', x1: player.x, y1: player.y,
+            x2: player.x + Math.cos(ang) * 700, y2: player.y + Math.sin(ang) * 700,
+            life: 0.18, maxLife: 0.18, color: '#38bdf8', width: l.evolved ? 10 : 6
+          });
+          recordOutgoingAttack({ type: 'laser', angle: ang, evolved: l.evolved });
         }
       }
 
-      // 11. 聖芒長矛 (Spear)
+      // 11. 聖芒長矛
       const sp = WEAPONS.spear;
       if (sp.level > 0) {
         sp.timer += dt;
@@ -1688,10 +1924,11 @@
               life: 1.4
             });
           });
+          recordOutgoingAttack({ type: 'spear', evolved: sp.evolved });
         }
       }
 
-      // 12. 幽冥厲鬼 (Skull)
+      // 12. 幽冥厲鬼
       const sk = WEAPONS.skull;
       if (sk.level > 0) {
         sk.timer += dt;
@@ -1708,8 +1945,101 @@
             pierce: 2 + heroPierce,
             life: 1.8, type: 'skull'
           });
+          recordOutgoingAttack({ type: 'skull', targetX: Math.round(target.x), targetY: Math.round(target.y), evolved: sk.evolved });
         }
       }
+    }
+
+    // 多人模式下升級時背景運算：魔物與隊友持續行動，自己獲得無敵保護
+    function updateMultiplayerBackground(dt) {
+      player.invulnerableTimer = Math.max(player.invulnerableTimer, 1.0);
+      camera.x = player.x - window.innerWidth / 2;
+      camera.y = player.y - window.innerHeight / 2;
+
+      Object.keys(peers).forEach(id => {
+        const p = peers[id];
+        if (p.targetX !== undefined && p.targetY !== undefined) {
+          const dx = p.targetX - p.currentX, dy = p.targetY - p.currentY;
+          if (Math.hypot(dx, dy) > 150) {
+            p.currentX = p.targetX; p.currentY = p.targetY;
+          } else {
+            p.currentX += dx * 0.2;
+            p.currentY += dy * 0.2;
+          }
+        }
+      });
+
+      syncTimer += dt;
+      if (syncTimer >= 0.05) {
+        syncPlayerPosition(player.x, player.y, player.hp, player.facingX, player.level, player.maxHp, player.attackPulse);
+        syncTimer = 0;
+      }
+
+      if (isRoomHost) {
+        enemySpawnCounter += dt;
+        if (enemySpawnCounter >= Math.max(0.12, 0.8 - currentWave * 0.008) && enemies.length < 150) {
+          spawnEnemy();
+          enemySpawnCounter = 0;
+        }
+
+        enemySyncTimer += dt;
+        if (enemySyncTimer >= 0.2) {
+          syncPartyRoomState(true);
+          enemySyncTimer = 0;
+        }
+
+        for (let i = enemies.length - 1; i >= 0; i--) {
+          const e = enemies[i];
+          if (e.dead) { enemies.splice(i, 1); continue; }
+          if (e.slowTimer > 0) e.slowTimer -= dt;
+          if (e.poisonTimer > 0) {
+            e.poisonTimer -= dt;
+            damageEnemy(e, (e.poisonDamage || 10) * dt, '#22c55e', true);
+          }
+
+          let targetX = player.x, targetY = player.y;
+          let minDist = Math.hypot(player.x - e.x, player.y - e.y);
+          Object.values(peers).forEach(p => {
+            const pDist = Math.hypot(p.currentX - e.x, p.currentY - e.y);
+            if (pDist < minDist) { minDist = pDist; targetX = p.currentX; targetY = p.currentY; }
+          });
+
+          const a = Math.atan2(targetY - e.y, targetX - e.x);
+          const currentSpd = e.speed * (e.slowTimer > 0 ? 0.65 : 1.0);
+          e.x += Math.cos(a) * currentSpd * 60 * dt;
+          e.y += Math.sin(a) * currentSpd * 60 * dt;
+        }
+      }
+
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i]; b.x += b.vx * 60 * dt; b.y += b.vy * 60 * dt; b.life -= dt;
+        if (b.life <= 0) bullets.splice(i, 1);
+      }
+
+      for (let i = specialVisualEffects.length - 1; i >= 0; i--) {
+        specialVisualEffects[i].life -= dt;
+        if (specialVisualEffects[i].life <= 0) specialVisualEffects.splice(i, 1);
+      }
+
+      for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        floatingTexts[i].y += floatingTexts[i].vy * 60 * dt; floatingTexts[i].life -= dt;
+        if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1);
+      }
+
+      for (let i = lightningStrikes.length - 1; i >= 0; i--) {
+        lightningStrikes[i].life -= dt;
+        if (lightningStrikes[i].life <= 0) lightningStrikes.splice(i, 1);
+      }
+
+      waveTimer -= dt;
+      if (waveTimer <= 0) {
+        currentWave++;
+        waveTimer = 40;
+        if (currentWave > highestWave) highestWave = currentWave;
+        saveGameProgress();
+        playSound('levelup');
+      }
+      updateHUD(waveTimer, currentWave, 100, killCount);
     }
 
     function update(dt) {
@@ -1731,7 +2061,7 @@
       if (player.attackPulse > 0) player.attackPulse = Math.max(0, player.attackPulse - dt);
       if (PASSIVES.heart.level > 0) player.hp = Math.min(player.maxHp, player.hp + PASSIVES.heart.level * 1.5 * dt);
 
-      // Multiplayer peers interpolation
+      // 隊友插值同步
       if (isMultiplayer) {
         Object.keys(peers).forEach(id => {
           const p = peers[id];
@@ -1752,7 +2082,7 @@
         }
       }
 
-      // Magnet & item pickup (Rogue hero bonus +30% magnet)
+      // 寶石吸附與拾取
       const rogueMagnet = selectedHeroKey === 'rogue' ? 1.3 : 1.0;
       const mag = 100 * (1 + PASSIVES.magnet.level * 0.35) * (1 + Talents.magnet.level * Talents.magnet.value) * rogueMagnet;
       for (let i = gems.length - 1; i >= 0; i--) {
@@ -1781,22 +2111,32 @@
 
       updateWeapons(dt);
 
-      // Bullets
+      // 彈幕運算
       for (let i = bullets.length - 1; i >= 0; i--) {
         const b = bullets[i]; b.x += b.vx * 60 * dt; b.y += b.vy * 60 * dt; b.life -= dt;
         let hit = false;
-        for (let j = enemies.length - 1; j >= 0; j--) {
-          const e = enemies[j];
-          if (!e.dead && Math.hypot(b.x - e.x, b.y - e.y) < b.radius + e.radius) {
-            damageEnemy(e, b.damage, b.color);
-            b.pierce--;
-            if (b.pierce <= 0) { hit = true; break; }
+        if (!b.isPeerBullet) {
+          for (let j = enemies.length - 1; j >= 0; j--) {
+            const e = enemies[j];
+            if (!e.dead && Math.hypot(b.x - e.x, b.y - e.y) < b.radius + e.radius) {
+              damageEnemy(e, b.damage, b.color);
+              b.pierce--;
+              if (b.pierce <= 0) { hit = true; break; }
+            }
+          }
+        } else {
+          for (let j = enemies.length - 1; j >= 0; j--) {
+            const e = enemies[j];
+            if (!e.dead && Math.hypot(b.x - e.x, b.y - e.y) < b.radius + e.radius) {
+              b.pierce--;
+              if (b.pierce <= 0) { hit = true; break; }
+            }
           }
         }
         if (hit || b.life <= 0) bullets.splice(i, 1);
       }
 
-      // Host spawns & runs enemies
+      // 房主管理怪物生成與同步
       if (!isMultiplayer || isRoomHost) {
         enemySpawnCounter += dt;
         if (enemySpawnCounter >= Math.max(0.12, 0.8 - currentWave * 0.008) && enemies.length < 150) {
@@ -1813,20 +2153,21 @@
         }
       }
 
-      // Poison zones
+      // 地面毒池
       for (let i = groundZones.length - 1; i >= 0; i--) {
         const z = groundZones[i];
         z.life -= dt;
         if (z.life <= 0) { groundZones.splice(i, 1); continue; }
-        enemies.forEach(e => {
-          if (!e.dead && Math.hypot(e.x - z.x, e.y - z.y) < z.radius) {
-            e.poisonTimer = Math.max(e.poisonTimer || 0, 3);
-            e.poisonDamage = z.damage;
-          }
-        });
+        if (!z.isPeerZone) {
+          enemies.forEach(e => {
+            if (!e.dead && Math.hypot(e.x - z.x, e.y - z.y) < z.radius) {
+              e.poisonTimer = Math.max(e.poisonTimer || 0, 3);
+              e.poisonDamage = z.damage;
+            }
+          });
+        }
       }
 
-      // Enemies movement & collision
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         if (e.dead) { enemies.splice(i, 1); continue; }
@@ -1837,7 +2178,6 @@
           damageEnemy(e, (e.poisonDamage || 10) * dt, '#22c55e');
         }
 
-        // Host AI targeting closest player
         if (!isMultiplayer || isRoomHost) {
           let targetX = player.x, targetY = player.y;
           let minDist = Math.hypot(player.x - e.x, player.y - e.y);
@@ -1877,7 +2217,7 @@
           }
         }
 
-        // Local collision with player
+        // 玩家碰撞
         const pDist = Math.hypot(player.x - e.x, player.y - e.y);
         if (pDist < player.size / 2 + e.radius && player.invulnerableTimer <= 0) {
           const armorDef = PASSIVES.armor.level * 3 + (selectedHeroKey === 'valkyrie' ? 3 : 0);
@@ -1891,7 +2231,7 @@
         }
       }
 
-      // Enemy projectiles
+      // 敵方投射物
       for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
         const ep = enemyProjectiles[i]; ep.x += ep.vx * 60 * dt; ep.y += ep.vy * 60 * dt; ep.life -= dt;
         if (Math.hypot(ep.x - player.x, ep.y - player.y) < ep.radius + player.size / 2 && player.invulnerableTimer <= 0) {
@@ -1906,7 +2246,8 @@
         if (ep.life <= 0) enemyProjectiles.splice(i, 1);
       }
 
-      // FX
+      // 特效與文字
+      for (let i = specialVisualEffects.length - 1; i >= 0; i--) { specialVisualEffects[i].life -= dt; if (specialVisualEffects[i].life <= 0) specialVisualEffects.splice(i, 1); }
       for (let i = floatingTexts.length - 1; i >= 0; i--) { floatingTexts[i].y += floatingTexts[i].vy * 60 * dt; floatingTexts[i].life -= dt; if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); }
       for (let i = lightningStrikes.length - 1; i >= 0; i--) { lightningStrikes[i].life -= dt; if (lightningStrikes[i].life <= 0) lightningStrikes.splice(i, 1); }
 
@@ -1977,6 +2318,16 @@
         }
       });
 
+      if (isMultiplayer) {
+        Object.values(peers).forEach(p => {
+          if (p.currentX !== undefined && Math.abs(p.currentX - player.x) <= range && Math.abs(p.currentY - player.y) <= range) {
+            const pMini = toMini(p.currentX, p.currentY);
+            ctx.beginPath(); ctx.arc(pMini.x, pMini.y, 3.2, 0, Math.PI * 2);
+            ctx.fillStyle = '#38bdf8'; ctx.fill();
+          }
+        });
+      }
+
       const pPos = toMini(player.x, player.y);
       ctx.beginPath(); ctx.arc(pPos.x, pPos.y, 3.5, 0, Math.PI * 2);
       ctx.fillStyle = '#22c55e'; ctx.fill();
@@ -1984,44 +2335,63 @@
 
     function draw() {
       const canvas = document.getElementById('gameCanvas');
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      if (gameState !== 'PLAYING') return;
+      // 確保在 UPGRADE 與 PAUSED 狀態下背景依然正常繪製，避免畫面靜止或黑屏
+      if (gameState !== 'PLAYING' && gameState !== 'UPGRADE' && gameState !== 'PAUSED') return;
 
       ctx.save(); ctx.translate(-camera.x, -camera.y);
       drawMap(ctx, camera, canvas.width, canvas.height, MAPS[selectedMapKey] || MAPS.dungeon);
 
-      // Ground poison zones
+      // 地面毒池
       groundZones.forEach(z => {
         ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
         ctx.fillStyle = z.color; ctx.fill();
         ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(74,222,128,0.7)'; ctx.stroke();
       });
 
-      // Gems & Coins
+      // 掉落寶石與金幣
       gems.forEach(g => {
         ctx.beginPath(); ctx.arc(g.x, g.y, g.type === 'coin' ? 4.5 : 4, 0, Math.PI * 2);
         ctx.fillStyle = g.type === 'coin' ? '#facc15' : '#38bdf8'; ctx.fill();
       });
 
-      // Peers
+      // 隊友繪製 (含血條、名字、旋轉光球與施法特效)
       if (isMultiplayer) {
         const now = Date.now();
         Object.keys(peers).forEach(pid => {
           const p = peers[pid];
-          if (now - p.lastSeen < 4000 && p.currentX !== undefined) {
+          if (now - p.lastSeen < 6000 && p.currentX !== undefined) {
             ctx.save(); ctx.translate(p.currentX, p.currentY);
             if (p.facingX < 0) ctx.scale(-1, 1);
             const spr = SpriteCanvasCache[`hero_${p.heroKey}`] || SpriteCanvasCache.peerPlayer;
             if (spr) ctx.drawImage(spr, -spr.width / 2, -spr.height / 2);
             ctx.scale(p.facingX < 0 ? -1 : 1, 1);
-            ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#10b981'; ctx.textAlign = 'center';
-            ctx.fillText(p.name.split(' ')[0], 0, -22);
+
+            // 隊友旋轉光球
+            if (p.orbsInfo && p.orbsInfo.active) {
+              const oCount = p.orbsInfo.count || 3, oRad = p.orbsInfo.radius || 75;
+              const oAng = p.orbsInfo.angle || 0;
+              for (let i = 0; i < oCount; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.cos(oAng + i * (Math.PI * 2 / oCount)) * oRad, Math.sin(oAng + i * (Math.PI * 2 / oCount)) * oRad, p.orbsInfo.evolved ? 9 : 6, 0, Math.PI * 2);
+                ctx.fillStyle = p.orbsInfo.evolved ? '#facc15' : '#818cf8'; ctx.fill();
+              }
+            }
+
+            // 隊友名稱與迷你血條
+            ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = '#34d399'; ctx.textAlign = 'center';
+            ctx.fillText(p.name.split(' ')[0], 0, -26);
+            if (p.maxHp) {
+              ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(-14, -22, 28, 3.5);
+              ctx.fillStyle = '#22c55e'; ctx.fillRect(-14, -22, Math.max(0, (p.hp / p.maxHp)) * 28, 3.5);
+            }
             ctx.restore();
           }
         });
       }
 
-      // Enemies
+      // 敵人繪製
       enemies.forEach(e => {
         ctx.save(); ctx.translate(e.x, e.y);
         const spr = e.isBoss ? SpriteCanvasCache.boss : (SpriteCanvasCache[e.type] || SpriteCanvasCache.bat);
@@ -2031,18 +2401,18 @@
         }
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(-e.radius, -e.radius-8, e.radius*2, 4);
         ctx.fillStyle = e.isBoss ? '#facc15' : '#ef4444';
-        ctx.fillRect(-e.radius, -e.radius-8, (e.hp/e.maxHp)*e.radius*2, 4);
+        ctx.fillRect(-e.radius, -e.radius-8, Math.max(0, (e.hp/e.maxHp))*e.radius*2, 4);
         ctx.restore();
       });
 
-      // Player
+      // 本地玩家
       ctx.save(); ctx.translate(player.x, player.y);
-      if(player.invulnerableTimer > 0 && Math.floor(Date.now()/80)%2===0) ctx.globalAlpha = 0.4;
+      if(player.invulnerableTimer > 0 && Math.floor(Date.now()/80)%2===0) ctx.globalAlpha = 0.45;
       if (player.facingX < 0) ctx.scale(-1, 1);
       const hSpr = SpriteCanvasCache[`hero_${selectedHeroKey}`];
       if(hSpr) ctx.drawImage(hSpr, -hSpr.width/2, -hSpr.height/2);
 
-      // Orbs visual
+      // 本地玩家聖靈光球
       const o = WEAPONS.orbs;
       if (o.level > 0) {
         ctx.scale(player.facingX < 0 ? -1 : 1, 1);
@@ -2056,7 +2426,26 @@
       }
       ctx.restore();
 
-      // Bullets
+      // 特殊攻擊光波與刀芒 (鞭子、雷射、火環、霜環)
+      specialVisualEffects.forEach(fx => {
+        ctx.save();
+        if (fx.type === 'whip') {
+          ctx.strokeStyle = fx.color || '#ef4444'; ctx.lineWidth = 5; ctx.globalAlpha = fx.life / fx.maxLife;
+          ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.radius, fx.angle - 0.7, fx.angle + 0.7); ctx.stroke();
+        } else if (fx.type === 'laser') {
+          ctx.strokeStyle = fx.color || '#38bdf8'; ctx.lineWidth = fx.width || 6; ctx.globalAlpha = fx.life / fx.maxLife;
+          ctx.beginPath(); ctx.moveTo(fx.x1, fx.y1); ctx.lineTo(fx.x2, fx.y2); ctx.stroke();
+        } else if (fx.type === 'firering') {
+          ctx.strokeStyle = fx.color || '#f97316'; ctx.lineWidth = 4; ctx.globalAlpha = fx.life / fx.maxLife;
+          ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.radius, 0, Math.PI * 2); ctx.stroke();
+        } else if (fx.type === 'frost') {
+          ctx.strokeStyle = fx.color || '#67e8f9'; ctx.lineWidth = 4; ctx.globalAlpha = fx.life / fx.maxLife;
+          ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.radius, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.restore();
+      });
+
+      // 投射物彈幕
       bullets.forEach(b => {
         ctx.save();
         ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
@@ -2064,13 +2453,13 @@
         ctx.restore();
       });
 
-      // Enemy Projectiles
+      // 敵方投射物
       enemyProjectiles.forEach(ep => {
         ctx.beginPath(); ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI * 2);
         ctx.fillStyle = ep.color; ctx.fill();
       });
 
-      // Lightning strikes
+      // 天罰落雷
       lightningStrikes.forEach(l => {
         ctx.save();
         ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 4;
@@ -2079,7 +2468,7 @@
         ctx.restore();
       });
 
-      // Floating damage texts
+      // 飄浮傷害數字
       floatingTexts.forEach(ft => {
         ctx.font = `bold ${ft.size||14}px 'Courier New'`;
         ctx.textAlign = 'center'; ctx.fillStyle = ft.color;
@@ -2217,7 +2606,12 @@
     function gameLoop(now) {
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
-      if (gameState === 'PLAYING') update(dt);
+      if (gameState === 'PLAYING') {
+        update(dt);
+      } else if (gameState === 'UPGRADE' && isMultiplayer) {
+        // 多人模式升級時維持背景平滑模擬，絕不凍結畫面
+        updateMultiplayerBackground(dt);
+      }
       draw();
       requestAnimationFrame(gameLoop);
     }
