@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>像素傳奇倖存者：諸神黃昏 (Pixel Legends: Ragnarok)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #030712; font-family: 'Courier New', Courier, -apple-system, sans-serif; color: #f1f5f9; image-rendering: pixelated; }
+    #gameCanvas { display: block; width: 100%; height: 100%; background: #05070d; touch-action: none; }
+    
+    /* HUD 介面樣式 */
+    #hud { position: absolute; top: 0; left: 0; width: 100%; padding: 8px 12px; pointer-events: none; display: none; flex-direction: column; gap: 5px; z-index: 40; }
+    .hud-row { display: flex; justify-content: space-between; align-items: center; text-shadow: 0 2px 4px rgba(0,0,0,0.9); }
+    .hud-group { display: flex; align-items: center; gap: 6px; }
+    .bar-container { width: 100%; height: 10px; background: rgba(15, 23, 42, 0.85); border-radius: 5px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.2); position: relative; }
+    #expBar { width: 0%; height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8, #818cf8); box-shadow: 0 0 8px rgba(56, 189, 248, 0.7); transition: width 0.12s ease-out; }
+    .hp-container { width: 110px; height: 11px; background: rgba(15, 23, 42, 0.85); border-radius: 5px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.2); }
+    #hpBar { width: 100%; height: 100%; background: linear-gradient(90deg, #22c55e, #16a34a); transition: width 0.2s ease-out; }
+    .badge { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid rgba(255, 255, 255, 0.15); pointer-events: auto; display: flex; align-items: center; gap: 5px; }
+    .icon-btn { cursor: pointer; background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 3px 7px; border-radius: 6px; font-size: 12px; pointer-events: auto; }
+    .icon-btn:active { transform: scale(0.92); }
+    
+    #minimapWrapper { position: absolute; top: 55px; right: 12px; width: 85px; height: 85px; background: rgba(10, 15, 26, 0.85); border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 50%; overflow: visible; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.9); z-index: 42; display: none; pointer-events: none; }
+    #minimapCanvas { width: 100%; height: 100%; display: block; border-radius: 50%; overflow: hidden; }
+    .party-revive-badge { position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); background: rgba(15, 23, 42, 0.9); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.6); border-radius: 999px; font-size: 10px; padding: 3px 8px; white-space: nowrap; z-index: 43; }
+    #eventBanner { display: none; background: linear-gradient(90deg, rgba(185, 28, 28, 0.9), rgba(127, 29, 29, 0.9)); color: #fff; text-align: center; font-size: 11px; font-weight: 900; padding: 3px 10px; border-radius: 4px; border: 1px solid #ef4444; animation: pulseEvent 1s infinite alternate; align-self: center; }
+    @keyframes pulseEvent { from { transform: scale(0.98); opacity: 0.9; } to { transform: scale(1.02); opacity: 1; } }
+    
+    /* 裝備欄與彈幕標籤樣式 */
+    #equipmentHud { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+    .equip-slot { width: 26px; height: 26px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 5px; display: flex; align-items: center; justify-content: center; position: relative; }
+    .equip-slot canvas { width: 18px; height: 18px; image-rendering: pixelated; }
+    .equip-level { position: absolute; bottom: -3px; right: -3px; font-size: 8px; background: #b91c1c; color: #fff; padding: 0 2px; border-radius: 3px; font-weight: bold; }
+    .equip-level.evolved { background: #d97706; color: #000; box-shadow: 0 0 5px #d97706; }
+    
+    /* 視窗與彈窗 */
+    .screen-overlay, .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.92); backdrop-filter: blur(8px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; padding: 10px; }
+    .screen-overlay.active, .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .panel-card { background: #0b1120; border: 2px solid #1e293b; border-radius: 14px; padding: 14px; width: 95%; max-width: 580px; text-align: center; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95); animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2); max-height: 94vh; display: flex; flex-direction: column; touch-action: pan-y; }
+    @keyframes popIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .panel-title { font-size: 18px; font-weight: 900; margin-bottom: 3px; color: #38bdf8; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .panel-desc { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
+    .upgrade-wait-status { display: none; margin: 0 0 8px; padding: 6px 10px; border-radius: 8px; background: rgba(13, 65, 94, 0.7); border: 1px solid rgba(56, 189, 248, 0.35); color: #bae6fd; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
+    .upgrade-wait-status.visible { display: block; }
+    .menu-btn-grid { display: grid; grid-template-columns: 1fr; gap: 7px; width: 100%; }
+    .action-btn { background: linear-gradient(135deg, #0369a1, #075985); color: #ffffff; border: 1px solid rgba(255,255,255,0.18); padding: 10px 14px; font-size: 13px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: transform 0.08s ease; }
+    .action-btn:active { transform: scale(0.97); }
+    .action-btn.gold { background: linear-gradient(135deg, #b45309, #92400e); }
+    .action-btn.emerald { background: linear-gradient(135deg, #047857, #065f46); }
+    .action-btn.purple { background: linear-gradient(135deg, #6d28d9, #5b21b6); }
+    .action-btn.crimson { background: linear-gradient(135deg, #b91c1c, #991b1b); }
+    .action-btn.secondary { background: #131d31; border-color: #334155; }
+    .action-btn:disabled { opacity: 0.45; filter: grayscale(0.8); cursor: not-allowed; }
+
+    /* 角色舞台與卡片 */
+    .hero-stage { background: radial-gradient(circle at center, rgba(56, 189, 248, 0.12) 0%, rgba(11, 17, 32, 0.8) 80%); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; text-align: left; }
+    .hero-preview-box { width: 68px; height: 68px; background: rgba(15, 23, 42, 0.9); border: 2px solid #38bdf8; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 15px rgba(56, 189, 248, 0.35); }
+    .hero-preview-canvas { width: 48px; height: 48px; animation: heroFloat 2s ease-in-out infinite; }
+    @keyframes heroFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    .hero-stage-info { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .hero-stage-name { font-size: 14.5px; font-weight: bold; color: #f8fafc; display: flex; justify-content: space-between; }
+    .hero-stat-bars { display: flex; gap: 8px; font-size: 10px; color: #94a3b8; }
+    .stat-pill { background: rgba(30, 41, 59, 0.9); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); }
+    .hero-stage-trait { font-size: 10.5px; color: #38bdf8; line-height: 1.35; background: rgba(2, 132, 199, 0.1); padding: 4px 6px; border-radius: 6px; margin-top: 2px; }
+    .hero-carousel { display: flex; gap: 8px; overflow-x: auto; padding: 6px 2px 8px 2px; margin-bottom: 8px; scroll-snap-type: x mandatory; }
+    .hero-tab-card { flex: 0 0 66px; height: 74px; background: #131d31; border: 2px solid #1e293b; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; scroll-snap-align: start; }
+    .hero-tab-card.active { border-color: #38bdf8; background: #0c4a6e; }
+    .hero-tab-card.locked { opacity: 0.4; filter: grayscale(0.9); }
+    .hero-tab-canvas { width: 28px; height: 28px; image-rendering: pixelated; }
+    .hero-tab-name { font-size: 9.5px; color: #e2e8f0; white-space: nowrap; overflow: hidden; }
+    
+    .selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; width: 100%; margin-bottom: 12px; max-height: 55vh; overflow-y: auto; }
+    .select-card { background: #131d31; border: 2px solid #1e293b; padding: 10px; border-radius: 10px; cursor: pointer; text-align: left; }
+    .select-card.active { border-color: #38bdf8; background: #0c395b; }
+    .skill-list, .talent-list, .achievement-list { display: flex; flex-direction: column; gap: 7px; width: 100%; max-height: 52vh; overflow-y: auto; }
+    .skill-card { display: flex; align-items: center; gap: 10px; background: #131d31; border: 1px solid #1e293b; padding: 8px 10px; border-radius: 8px; cursor: pointer; text-align: left; }
+    .skill-card.evolve { background: linear-gradient(135deg, #1e1b4b, #0f172a); border-color: #d97706; }
+    .skill-icon-box { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; flex-shrink: 0; }
+    .skill-info { flex: 1; }
+    .skill-info h4 { font-size: 13px; color: #f8fafc; }
+    .skill-info p { font-size: 10.5px; color: #94a3b8; }
+    
+    .lobby-player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; width: 100%; margin: 8px 0; max-height: 36vh; overflow-y: auto; }
+    .lobby-player-card { background: #131d31; border: 1px solid #334155; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .lobby-player-card.ready { border-color: #10b981; background: #064e3b22; }
+    .lobby-player-card.host { border-color: #f59e0b; }
+    .lobby-status-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+    .lobby-status-tag.ready { background: #059669; color: #fff; }
+    .lobby-status-tag.waiting { background: #475569; color: #cbd5e1; }
+    .lobby-status-tag.host { background: #d97706; color: #fff; }
+
+    #joystickZone { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; pointer-events: auto; touch-action: none; }
+    #joystickBase { position: absolute; width: 90px; height: 90px; border-radius: 50%; background: rgba(255, 255, 255, 0.06); border: 2px solid rgba(255, 255, 255, 0.2); transform: translate(-50%, -50%); display: none; }
+    #joystickStick { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #38bdf8, #0369a1); transform: translate(-50%, -50%); display: none; }
+
+    /* 像素圖標專用 CSS */
+    .pixel-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; width: 16px; height: 16px; margin-right: 4px; }
+    .pixel-icon canvas { image-rendering: pixelated; max-width: 100%; max-height: 100%; }
+    .badge .pixel-icon { width: 12px; height: 12px; margin-right: 2px; }
+    .action-btn .pixel-icon { width: 18px; height: 18px; margin-right: 6px; }
+
+    /* 自訂無侵入式通知彈窗 (代替 window.alert) */
+    #customToastModal { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; pointer-events: none; opacity: 0; transition: opacity 0.25s ease, transform 0.25s ease; width: 90%; max-width: 420px; }
+    #customToastModal.active { opacity: 1; transform: translateX(-50%) translateY(10px); pointer-events: auto; }
+    .toast-box { background: #0f172a; border: 2px solid #38bdf8; border-radius: 10px; padding: 12px 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .toast-msg { font-size: 12.5px; color: #f8fafc; font-weight: bold; line-height: 1.4; }
+    .toast-close { background: #334155; border: none; color: #fff; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="hud">
+    <div class="hud-row">
+      <div class="hud-group">
+        <span class="badge" id="heroBadge" style="color:#38bdf8;">聖殿騎士</span>
+        <span class="badge" id="levelDisplay" style="color:#38bdf8;">LV. 1</span>
+        <div class="hp-container"><div id="hpBar"></div></div>
+      </div>
+      <div class="hud-group">
+        <span class="badge" id="killDisplay" style="color:#f87171;"><i class="pixel-icon" data-icon="ui_skull"></i> 0</span>
+        <span class="badge" id="goldDisplay" style="color:#f59e0b;"><i class="pixel-icon" data-icon="ui_gold"></i> 0</span>
+        <span class="badge" id="waveDisplay">第 1 / 100 波</span>
+        <span class="badge" id="timeDisplay" style="color:#38bdf8;">00:40</span>
+        <button class="icon-btn" id="pauseBtn"><i class="pixel-icon" data-icon="ui_pause"></i></button>
+        <button class="icon-btn" id="audioToggleBtn"><i class="pixel-icon" data-icon="ui_audio"></i></button>
+      </div>
+    </div>
+    <div id="eventBanner"><i class="pixel-icon" data-icon="ui_alert"></i> 特殊事件：魔潮狂暴！</div>
+    <div class="bar-container"><div id="expBar"></div></div>
+    <div id="equipmentHud"></div>
+  </div>
+
+  <div id="minimapWrapper">
+    <canvas id="minimapCanvas" width="85" height="85"></canvas>
+    <div id="partyReviveDisplay" class="party-revive-badge">復活：0</div>
+  </div>
+
+  <div id="customToastModal">
+    <div class="toast-box">
+      <div class="toast-msg" id="customToastText">系統通知</div>
+      <button class="toast-close" id="customToastBtn">關閉</button>
+    </div>
+  </div>
+
+  <!-- 主選單 -->
+  <div class="screen-overlay active" id="mainMenuScreen">
+    <div class="panel-card">
+      <div class="panel-title"><i class="pixel-icon" data-icon="ui_shield"></i> 像素傳奇倖存者：諸神黃昏</div>
+      <div class="panel-desc">暗黑像素風格・100波極限生存・房主組隊連線大廳</div>
+      <div class="menu-btn-grid">
+        <button class="action-btn" id="btnGoogleLogin" style="background: #ffffff; color: #333; border-color: #ddd;">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" style="margin-right:8px;" alt="G">
+          <span id="loginText">Google 帳號登入 (雲端存檔)</span>
+        </button>
+        <button class="action-btn" id="btnMenuPlay"><i class="pixel-icon" data-icon="ui_sword"></i> 單人單騎出征</button>
+        <button class="action-btn purple" id="btnMenuMulti"><i class="pixel-icon" data-icon="ui_globe"></i> 多人組隊大廳</button>
+        <button class="action-btn emerald" id="btnMenuChar"><i class="pixel-icon" data-icon="ui_hero"></i> 英雄名冊 & 特長</button>
+        <button class="action-btn" id="btnMenuMap"><i class="pixel-icon" data-icon="ui_map"></i> 冒險關卡選擇</button>
+        <button class="action-btn gold" id="btnMenuTalent"><i class="pixel-icon" data-icon="ui_temple"></i> 靈魂神殿</button>
+        <button class="action-btn secondary" id="btnMenuAchievements"><i class="pixel-icon" data-icon="ui_trophy"></i> 成就勳章</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 多人連線模式入口 -->
+  <div class="screen-overlay" id="multiMatchScreen">
+    <div class="panel-card">
+      <div class="panel-title" style="color:#c084fc;"><i class="pixel-icon" data-icon="ui_globe"></i> 多人連線模式</div>
+      <div class="panel-desc">建立房間成為房主，或輸入代碼加入隊友房間：</div>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
+        <button class="action-btn emerald" id="btnHostCreateRoom" style="padding:14px;"><i class="pixel-icon" data-icon="ui_host"></i> 建立新房間 (成為房主)</button>
+        <div style="border-top:1px solid #1e293b; margin:4px 0; padding-top:10px; font-size:12px; color:#94a3b8;">或者加入現有房間：</div>
+        <input type="text" id="joinRoomCodeInput" class="action-btn secondary" style="text-align:center; font-size:16px; letter-spacing:2px;" maxlength="6" placeholder="輸入 6 位房間代碼">
+        <button class="action-btn purple" id="btnGuestJoinRoom"><i class="pixel-icon" data-icon="ui_play"></i> 加入隊友房間</button>
+      </div>
+      <button class="action-btn secondary" id="btnBackFromMatch">返回主選單</button>
+    </div>
+  </div>
+
+  <!-- 多人房間大廳 -->
+  <div class="screen-overlay" id="multiLobbyScreen">
+    <div class="panel-card">
+      <div class="panel-title" style="color:#a855f7;"><span>房間大廳：</span><span id="lobbyRoomCodeText" style="color:#facc15; letter-spacing:2px; text-decoration:underline;">------</span></div>
+      <div class="panel-desc" id="lobbyRoleDesc">房主請等待成員準備完成後點擊開始戰鬥</div>
+      <div style="font-size:11px; color:#94a3b8; text-align:left; margin-bottom:2px;">切換出戰英雄：</div>
+      <div class="hero-carousel" id="lobbyHeroCarousel"></div>
+      <div style="font-size:11px; color:#94a3b8; text-align:left;">隊伍成員 (<span id="lobbyPlayerCount">1</span>)：</div>
+      <div class="lobby-player-grid" id="lobbyPlayerList"></div>
+      <div style="display:flex; gap:8px; width:100%; margin-top:8px;">
+        <button class="action-btn emerald" id="btnHostStartGame" style="flex:2; display:none;"><i class="pixel-icon" data-icon="ui_sword"></i> 🚀 開始戰鬥</button>
+        <button class="action-btn gold" id="btnGuestToggleReady" style="flex:2; display:none;"><i class="pixel-icon" data-icon="ui_ready"></i> 準備就緒</button>
+        <button class="action-btn crimson" id="btnLeaveLobby" style="flex:1;"><i class="pixel-icon" data-icon="ui_exit"></i> 離開</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 其他 Modal (選角、關卡、天賦、升級、結算) -->
+  <div class="screen-overlay" id="charSelectScreen">
+    <div class="panel-card">
+      <div class="panel-title"><i class="pixel-icon" data-icon="ui_hero"></i> 選擇出戰英雄</div>
+      <div class="hero-stage" id="heroStageBox">
+        <div class="hero-preview-box"><canvas class="hero-preview-canvas" id="heroPreviewCanvas" width="24" height="30"></canvas></div>
+        <div class="hero-stage-info">
+          <div class="hero-stage-name"><span id="stageHeroName">聖殿騎士 亞瑟</span><span id="stageHeroWeapon" style="font-size:12px; color:#facc15;">聖靈光球</span></div>
+          <div class="hero-stat-bars"><span class="stat-pill" id="stageHeroHp">生命 120</span><span class="stat-pill" id="stageHeroSpeed">移速 3.5</span></div>
+          <div class="hero-stage-trait" id="stageHeroTrait">【堅毅守護】生命上限 +20%</div>
+        </div>
+      </div>
+      <div class="hero-carousel" id="heroCarouselContainer"></div>
+      <div style="display:flex; gap:8px; width:100%;">
+        <button class="action-btn emerald" id="btnConfirmHero" style="flex:1;">✅ 選擇出戰</button>
+        <button class="action-btn secondary" id="btnBackFromChar" style="flex:1;">返回主選單</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-overlay" id="mapSelectScreen">
+    <div class="panel-card">
+      <div class="panel-title"><i class="pixel-icon" data-icon="ui_map"></i> 選擇冒險戰場</div>
+      <div class="selection-grid" id="mapListContainer"></div>
+      <button class="action-btn secondary" id="btnBackFromMap">確認並返回</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="talentModal">
+    <div class="panel-card">
+      <div class="panel-title" style="color:#f59e0b;"><i class="pixel-icon" data-icon="ui_temple"></i> 靈魂神殿</div>
+      <div class="panel-desc" id="talentGoldStatus">目前金幣儲備：0</div>
+      <div class="talent-list" id="talentOptionsList"></div>
+      <button class="action-btn secondary" id="closeTalentBtn" style="margin-top:10px;">返回主選單</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="achievementModal">
+    <div class="panel-card">
+      <div class="panel-title" style="color:#a855f7;"><i class="pixel-icon" data-icon="ui_trophy"></i> 英雄成就與獎勵</div>
+      <div class="achievement-list" id="achievementListContainer"></div>
+      <button class="action-btn secondary" id="closeAchievementBtn" style="margin-top:10px;">返回主選單</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="upgradeModal">
+    <div class="panel-card">
+      <div class="panel-title" id="upgradeTitle">⚡ 等級突破！</div>
+      <div class="panel-desc">選擇一項強化 (按 1/2/3 鍵快速選擇)：</div>
+      <div class="upgrade-wait-status" id="upgradeWaitStatus">等待隊友選擇升級中...</div>
+      <div class="skill-list" id="skillOptionsList"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="endModal">
+    <div class="panel-card">
+      <div class="panel-title" id="endTitle">戰鬥結束</div>
+      <div class="panel-desc" id="endDesc">戰況統計</div>
+      <div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">
+        <button class="action-btn" id="restartBtn">再次出征</button>
+        <button class="action-btn secondary" id="endBackMenuBtn">主選單</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="joystickZone"><div id="joystickBase"></div><div id="joystickStick"></div></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getDatabase, ref, get, set, onValue, update as updateDb, remove, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzwmGN_ONgtJCnMu0gUTSY4120ttpmSjQ",
+      authDomain: "pixellegends-f13d0.firebaseapp.com",
+      databaseURL: "https://pixellegends-f13d0-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "pixellegends-f13d0",
+      storageBucket: "pixellegends-f13d0.firebasestorage.app",
+      messagingSenderId: "799292344989",
+      appId: "1:799292344989:web:594042d56350d249b6a274"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const rtdb = getDatabase(app);
+    let currentUser = null;
+
+    const MAPS = {
+      dungeon: { id: 'dungeon', name: '深淵遺蹟 (護眼古石)', desc: '深沉暗灰板岩地磚與柔和石紋，怪物分佈均衡。', baseColor: '#090d16', tileColor1: '#0e1524', tileColor2: '#121a2c', borderAlpha: 0.08, enemySpeed: 1.0, enemyHp: 1.0 },
+      snowfield: { id: 'snowfield', name: '寒夜霜谷 (沉靜冰岩)', desc: '柔和深藍玄武岩與薄霧冰紋，暴雪使玩家移速 -10%，暴擊率 +25%。', baseColor: '#070f1a', tileColor1: '#0c1828', tileColor2: '#102035', borderAlpha: 0.09, enemySpeed: 0.9, enemyHp: 1.2 },
+      inferno: { id: 'inferno', name: '餘燼黑曜 (暗火焦土)', desc: '低飽和黑曜石層與柔和暗紅暗湧，金幣掉落翻倍！', baseColor: '#120808', tileColor1: '#1a0d0d', tileColor2: '#221111', borderAlpha: 0.08, enemySpeed: 1.2, enemyHp: 1.35 }
+    };
+
+    const HEROES = {
+      knight: { id: 'knight', name: '聖殿騎士 亞瑟', icon: 'wand', baseHp: 120, baseSpeed: 3.5, startingWeapon: 'orbs', weaponName: '聖靈光球', unlocked: true, traitDesc: '【堅毅守護】生命上限 +20%，初始自帶【聖靈光球】。', colorMap: { 'H': '#1e293b', 'F': '#38bdf8', 'S': '#fde047', 'W': '#ffffff', 'A': '#94a3b8', 'B': '#0284c7', 'L': '#1e293b' } },
+      mage: { id: 'mage', name: '秘法使者 艾琳', icon: 'wand', baseHp: 80, baseSpeed: 3.8, startingWeapon: 'wand', weaponName: '奧術飛彈', unlocked: true, traitDesc: '【奧術狂湧】冷卻 -15%，傷害 +10%，初始【奧術飛彈】。', colorMap: { 'H': '#581c87', 'F': '#c084fc', 'S': '#fde047', 'W': '#ffffff', 'A': '#e879f9', 'B': '#9333ea', 'L': '#3b0764' } },
+      rogue: { id: 'rogue', name: '暗影行者 影刃', icon: 'daggers', baseHp: 95, baseSpeed: 4.3, startingWeapon: 'daggers', weaponName: '幻影飛刀', unlocked: true, traitDesc: '【疾影突襲】移速 +20%，拾取範圍 +30%，初始【幻影飛刀】。', colorMap: { 'H': '#064e3b', 'F': '#34d399', 'S': '#fde047', 'W': '#ffffff', 'A': '#6ee7b7', 'B': '#059669', 'L': '#022c22' } },
+      storm: { id: 'storm', name: '風暴使徒 索爾', icon: 'thunder', baseHp: 100, baseSpeed: 3.6, startingWeapon: 'thunder', weaponName: '落雷術', unlocked: true, traitDesc: '【雷霆天罰】全域雷擊傷害 +30%，初始【落雷術】。', colorMap: { 'H': '#172554', 'F': '#facc15', 'S': '#fde047', 'W': '#ffffff', 'A': '#60a5fa', 'B': '#1d4ed8', 'L': '#0f172a' } },
+      vampire: { id: 'vampire', name: '暗夜伯爵 弗拉德', icon: 'whip', baseHp: 110, baseSpeed: 3.7, startingWeapon: 'whip', weaponName: '血色荊棘', unlocked: false, unlockReq: '擊殺 500 隻魔物解鎖', traitDesc: '【血族汲取】擊殺敵人 6% 機率吸血 1 HP，初始【血色荊棘】。', colorMap: { 'H': '#450a0a', 'F': '#ef4444', 'S': '#e2e8f0', 'W': '#f87171', 'A': '#991b1b', 'B': '#7f1d1d', 'L': '#1c1917' } },
+      ranger: { id: 'ranger', name: '森之巡者 萊拉', icon: 'bow', baseHp: 90, baseSpeed: 4.1, startingWeapon: 'bow', weaponName: '神聖長弓', unlocked: false, unlockReq: '生存突破第 5 波解鎖', traitDesc: '【精準射擊】全投射物穿透 +1，初始【神聖長弓】。', colorMap: { 'H': '#14532d', 'F': '#4ade80', 'S': '#fde047', 'W': '#ffffff', 'A': '#86efac', 'B': '#16a34a', 'L': '#052e16' } },
+      alchemist: { id: 'alchemist', name: '煉金大師 帕拉塞', icon: 'flask', baseHp: 95, baseSpeed: 3.6, startingWeapon: 'flask', weaponName: '劇毒藥劑', unlocked: false, unlockReq: '累計獲得 300 金幣解鎖', traitDesc: '【劇毒擴散】範圍效果體積 +30%，初始【劇毒藥劑】。', colorMap: { 'H': '#312e81', 'F': '#a855f7', 'S': '#fde047', 'W': '#ffffff', 'A': '#c084fc', 'B': '#6366f1', 'L': '#1e1b4b' } },
+      ignis: { id: 'ignis', name: '烈焰魔靈 艾格尼斯', icon: 'firering', baseHp: 100, baseSpeed: 3.7, startingWeapon: 'firering', weaponName: '烈焰之環', unlocked: false, unlockReq: '完成首次超武進化解鎖', traitDesc: '【烈火焚天】燃燒爆炸傷害 +25%，初始【烈焰之環】。', colorMap: { 'H': '#7c2d12', 'F': '#fb923c', 'S': '#fed7aa', 'W': '#ffffff', 'A': '#fdba74', 'B': '#ea580c', 'L': '#431407' } },
+      frost: { id: 'frost', name: '極寒冰女 希瓦娜', icon: 'frost', baseHp: 85, baseSpeed: 3.7, startingWeapon: 'frost', weaponName: '極寒霜星', unlocked: false, unlockReq: '生存突破第 15 波解鎖', traitDesc: '【霜凍領域】攻擊緩速敵人 35%，初始【極寒霜星】。', colorMap: { 'H': '#083344', 'F': '#67e8f9', 'S': '#cffafe', 'W': '#ffffff', 'A': '#a5f3fc', 'B': '#06b6d4', 'L': '#164e63' } },
+      cyborg: { id: 'cyborg', name: '殲滅機兵 雷克斯', icon: 'laser', baseHp: 130, baseSpeed: 3.4, startingWeapon: 'laser', weaponName: '離子射線', unlocked: false, unlockReq: '擊殺 1500 隻魔物解鎖', traitDesc: '【超限重武】所有武器彈幕發射數量 +1，初始【離子射線】。', colorMap: { 'H': '#334155', 'F': '#94a3b8', 'S': '#38bdf8', 'W': '#f43f5e', 'A': '#64748b', 'B': '#475569', 'L': '#0f172a' } },
+      valkyrie: { id: 'valkyrie', name: '女武神 瓦爾基麗', icon: 'spear', baseHp: 115, baseSpeed: 3.9, startingWeapon: 'spear', weaponName: '聖芒長矛', unlocked: false, unlockReq: '生存突破第 30 波解鎖', traitDesc: '【天界神威】免疫碰撞硬直，護甲 +3，初始【聖芒長矛】。', colorMap: { 'H': '#713f12', 'F': '#facc15', 'S': '#fef08a', 'W': '#ffffff', 'A': '#fde047', 'B': '#ca8a04', 'L': '#422006' } },
+      grim: { id: 'grim', name: '死靈術士 格里姆', icon: 'skull', baseHp: 90, baseSpeed: 3.5, startingWeapon: 'skull', weaponName: '幽冥厲鬼', unlocked: false, unlockReq: '擊敗第 50 波泰坦領主解鎖', traitDesc: '【幽魂召喚】擊殺敵人召喚自爆冤魂，初始【幽冥厲鬼】。', colorMap: { 'H': '#09090b', 'F': '#27272a', 'S': '#e4e4e7', 'W': '#a855f7', 'A': '#52525b', 'B': '#18181b', 'L': '#000000' } }
+    };
+
+    const WEAPONS = {
+      wand: { id: 'wand', name: '奧術飛彈', iconKey: 'wand', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '發射自動索敵的奧術飛彈', evolvesInto: 'arcane_gatling', requiredPassive: 'tome' },
+      orbs: { id: 'orbs', name: '聖靈光球', iconKey: 'orbs', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '圍繞自身旋轉的光球，阻擋粉碎近敵', evolvesInto: 'death_scythe', requiredPassive: 'power' },
+      daggers: { id: 'daggers', name: '幻影飛刀', iconKey: 'daggers', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '朝移動方向疾速投擲貫穿飛刀', evolvesInto: 'thousand_blades', requiredPassive: 'boots' },
+      thunder: { id: 'thunder', name: '落雷術', iconKey: 'thunder', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '召喚天雷猛烈轟炸隨機敵人', evolvesInto: 'storm_judgement', requiredPassive: 'duplicator' },
+      whip: { id: 'whip', name: '血色荊棘', iconKey: 'whip', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '橫向揮擊血鞭，撕裂前方敵人', evolvesInto: 'blood_tear', requiredPassive: 'heart' },
+      bow: { id: 'bow', name: '神聖長弓', iconKey: 'bow', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '蓄力朝前方射出強大貫穿光箭', evolvesInto: 'celestial_arrow', requiredPassive: 'clover' },
+      flask: { id: 'flask', name: '劇毒藥劑', iconKey: 'flask', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '向地面投擲毒瓶，產生持續腐蝕毒池', evolvesInto: 'toxic_plague', requiredPassive: 'candle' },
+      firering: { id: 'firering', name: '烈焰之環', iconKey: 'firering', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '週期性釋放全方位火焰衝擊波', evolvesInto: 'hellfire_nova', requiredPassive: 'crown' },
+      frost: { id: 'frost', name: '極寒霜星', iconKey: 'frost', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '向四周發射冰晶碎片，大幅緩速敵人', evolvesInto: 'absolute_zero', requiredPassive: 'armor' },
+      laser: { id: 'laser', name: '離子射線', iconKey: 'laser', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '朝最近敵人持續掃射高能貫穿雷射', evolvesInto: 'hyper_beam', requiredPassive: 'greed_pass' },
+      spear: { id: 'spear', name: '聖芒長矛', iconKey: 'spear', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '向四周穿刺出聖光長矛', evolvesInto: 'divine_lance', requiredPassive: 'power' },
+      skull: { id: 'skull', name: '幽冥厲鬼', iconKey: 'skull', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '召喚遊蕩死靈，追擊自爆', evolvesInto: 'soul_cataclysm', requiredPassive: 'crown' }
+    };
+
+    const EVOLVED_WEAPONS = {
+      arcane_gatling: { name: '滅世奧術機槍', iconKey: 'wand', desc: '極速連射高爆飛彈，命中引發範圍烈焰爆炸！' },
+      death_scythe: { name: '永恆死神旋刃', iconKey: 'orbs', desc: '超大範圍旋刃，命中造成雙倍暴擊與吸血！' },
+      thousand_blades: { name: '萬刃千芒風暴', iconKey: 'daggers', desc: '360度全方位無間斷發射無限穿透撕裂刃！' },
+      storm_judgement: { name: '滅世審判雷暴', iconKey: 'thunder', desc: '全場降下連環天罰雷暴，毀滅一切魔物！' },
+      blood_tear: { name: '血淚魔皇鞭', iconKey: 'whip', desc: '雙向超大範圍抽擊，大額吸血生命！' },
+      celestial_arrow: { name: '天堂裁決聖矢', iconKey: 'bow', desc: '光束巨矢穿透全螢幕，百發百中全暴擊！' },
+      toxic_plague: { name: '湮滅毒瘴瘟疫', iconKey: 'flask', desc: '劇毒沼澤覆蓋全場，迅速溶解一切生命！' },
+      hellfire_nova: { name: '紅蓮業火日蝕', iconKey: 'firering', desc: '全螢幕日蝕火環爆發，全場燃燒毀滅！' },
+      absolute_zero: { name: '絕對零度結界', iconKey: 'frost', desc: '全屏持續冰凍凍結敵人，碎冰二次爆發！' },
+      hyper_beam: { name: '超次元湮滅光束', iconKey: 'laser', desc: '直通天際的貫通巨型雷射，掃射噴發金幣！' },
+      divine_lance: { name: '女武神審判光矛', iconKey: 'spear', desc: '八方無限穿刺光矛，附帶神聖破甲！' },
+      soul_cataclysm: { name: '萬魂歸宗滅世劫', iconKey: 'skull', desc: '召喚整支死靈軍團席捲全場！' }
+    };
+
+    const PASSIVES = {
+      crown: { id: 'crown', name: '智慧王冠', iconKey: 'crown', level: 0, maxLevel: 5, desc: '經驗值獲取加成 +15%' },
+      tome: { id: 'tome', name: '秘術魔典', iconKey: 'tome', level: 0, maxLevel: 5, desc: '所有武器冷卻縮減 -12%' },
+      power: { id: 'power', name: '狂暴拳套', iconKey: 'power', level: 0, maxLevel: 5, desc: '提升所有武器傷害 +20%' },
+      boots: { id: 'boots', name: '疾風之靴', iconKey: 'boots', level: 0, maxLevel: 5, desc: '提升移動速度 +15%' },
+      magnet: { id: 'magnet', name: '引力戒指', iconKey: 'magnet', level: 0, maxLevel: 5, desc: '拾取寶石範圍 +35%' },
+      heart: { id: 'heart', name: '巨人之心', iconKey: 'heart', level: 0, maxLevel: 5, desc: '最大生命 +30 並持續自愈' },
+      clover: { id: 'clover', name: '幸運草', iconKey: 'clover', level: 0, maxLevel: 5, desc: '暴擊率 +15%，寶箱金幣加倍' },
+      armor: { id: 'armor', name: '守護鋼甲', iconKey: 'armor', level: 0, maxLevel: 5, desc: '受到傷害減少 3 點 (最低 1)' },
+      candle: { id: 'candle', name: '燭台護符', iconKey: 'candle', level: 0, maxLevel: 5, desc: '所有武器攻擊範圍與彈幕體積 +25%' },
+      duplicator: { id: 'duplicator', name: '複製之戒', iconKey: 'duplicator', level: 0, maxLevel: 5, desc: '所有武器發射彈幕數量 +1' },
+      greed_pass: { id: 'greed_pass', name: '貪婪錢袋', iconKey: 'greed_pass', level: 0, maxLevel: 5, desc: '金幣掉落量 +30%' }
+    };
+
+    const Talents = {
+      hp: { level: 0, max: 8, baseCost: 20, growth: 1.25, name: '生命鍛造', iconKey: 'heart', desc: '基礎生命上限 +12%', value: 0.12 },
+      dmg: { level: 0, max: 8, baseCost: 25, growth: 1.28, name: '力量覺醒', iconKey: 'power', desc: '全武器基礎傷害 +10%', value: 0.10 },
+      speed: { level: 0, max: 6, baseCost: 20, growth: 1.22, name: '神行之靴', iconKey: 'boots', desc: '移動速度 +6%', value: 0.06 },
+      exp: { level: 0, max: 8, baseCost: 30, growth: 1.30, name: '啟迪之光', iconKey: 'crown', desc: '經驗值獲取加成 +10%', value: 0.10 },
+      magnet: { level: 0, max: 6, baseCost: 15, growth: 1.20, name: '次元磁石', iconKey: 'magnet', desc: '寶石拾取範圍 +18%', value: 0.18 },
+      cooldown: { level: 0, max: 6, baseCost: 35, growth: 1.30, name: '急速詠唱', iconKey: 'tome', desc: '冷卻時間縮減 +5%', value: 0.05 },
+      greed: { level: 0, max: 6, baseCost: 25, growth: 1.25, name: '點金之術', iconKey: 'greed_pass', desc: '金幣拾取加成 +15%', value: 0.15 }
+    };
+
+    const ACHIEVEMENTS = [
+      { id: 'kill_100', title: '初出茅廬', desc: '單局擊殺 100 隻魔物', reward: '100 金幣', unlocked: false, check: (state) => state.killCount >= 100 },
+      { id: 'kill_500', title: '獵魔專家', desc: '累計擊殺 500 隻魔物 (解鎖暗夜伯爵)', reward: '英雄【暗夜伯爵】', unlocked: false, check: (state) => state.totalKills >= 500, onUnlock: () => { HEROES.vampire.unlocked = true; } },
+      { id: 'wave_5', title: '初試啼聲', desc: '生存突破第 5 波 (解鎖森之巡者)', reward: '英雄【森之巡者】', unlocked: false, check: (state) => state.currentWave >= 5, onUnlock: () => { HEROES.ranger.unlocked = true; } },
+      { id: 'gold_300', title: '煉金狂熱', desc: '持有超過 300 金幣 (解鎖煉金大師)', reward: '英雄【煉金大師】', unlocked: false, check: (state) => state.sessionGold >= 300, onUnlock: () => { HEROES.alchemist.unlocked = true; } },
+      { id: 'evolve_1', title: '超武覺醒', desc: '首次合成終極超武 (解鎖烈焰魔靈)', reward: '英雄【烈焰魔靈】', unlocked: false, check: (state) => state.hasEvolvedAny, onUnlock: () => { HEROES.ignis.unlocked = true; } },
+      { id: 'wave_15', title: '冰原征服者', desc: '生存突破第 15 波 (解鎖極寒冰女)', reward: '英雄【極寒冰女】', unlocked: false, check: (state) => state.currentWave >= 15, onUnlock: () => { HEROES.frost.unlocked = true; } },
+      { id: 'kill_1500', title: '機械狂潮', desc: '累計擊殺 1500 隻魔物 (解鎖殲滅機兵)', reward: '英雄【殲滅機兵】', unlocked: false, check: (state) => state.totalKills >= 1500, onUnlock: () => { HEROES.cyborg.unlocked = true; } },
+      { id: 'wave_30', title: '英靈殿試煉', desc: '生存突破第 30 波 (解鎖女武神)', reward: '英雄【女武神】', unlocked: false, check: (state) => state.currentWave >= 30, onUnlock: () => { HEROES.valkyrie.unlocked = true; } },
+      { id: 'wave_50', title: '泰坦屠戮者', desc: '擊敗第 50 波泰坦領主 (解鎖死靈術士)', reward: '英雄【死靈術士】', unlocked: false, check: (state) => state.currentWave >= 51, onUnlock: () => { HEROES.grim.unlocked = true; } }
+    ];
+
+    const PixelIconCache = {};
+    const SpriteCanvasCache = {};
+
+    function createPixelSprite(matrix, colorMap, scale = 2) {
+      const h = matrix.length, w = matrix[0].length;
+      const c = document.createElement('canvas');
+      c.width = w * scale; c.height = h * scale;
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const char = matrix[y][x];
+          if (char !== '.' && colorMap[char]) {
+            ctx.fillStyle = colorMap[char];
+            ctx.fillRect(x * scale, y * scale, scale, scale);
+          }
+        }
+      }
+      return c;
+    }
+
+    function initDarkPixelIcons() {
+      PixelIconCache.wand = createPixelSprite(["......BB", ".....BMB", "....BMB.", "...BMB..", "..BBB...", ".S.S....", "S...S...", "........"], { 'B': '#38bdf8', 'M': '#e0f2fe', 'S': '#78350f' }, 3);
+      PixelIconCache.orbs = createPixelSprite(["..BBBB..", ".BMMMMB.", "BMMMMMMB", "BMMMMMMB", "BMMMMMMB", ".BMMMMB.", "..BBBB.."], { 'B': '#4338ca', 'M': '#818cf8' }, 3);
+      PixelIconCache.daggers = createPixelSprite([".....WW.", "....WKW.", "...WKW..", "..WKW...", ".DDD....", "D.D.....", "DD......"], { 'W': '#e2e8f0', 'K': '#94a3b8', 'D': '#334155' }, 3);
+      PixelIconCache.heart = createPixelSprite([".RR..RR.", "RRRRRRRR", "RRRRRRRR", ".RRRRRR.", "..RRRR..", "...RR..."], { 'R': '#e11d48' }, 3);
+      PixelIconCache.crown = createPixelSprite(["Y.Y.Y.Y.", "YYYYYYYY", "YYKKKKYY", "YYYYYYYY", ".YYYYYY."], { 'Y': '#f59e0b', 'K': '#b45309' }, 3);
+      PixelIconCache.gold_coin = createPixelSprite([".YYYY.", "YYYYYY", "YYKKYY", "YYYYYY", ".YYYY."], { 'Y': '#facc15', 'K': '#ca8a04' }, 3);
+      PixelIconCache.power = createPixelSprite([".RRRR...", "RRRRRR..", "RRRRRR..", ".RRRR...", ".RRRR..."], { 'R': '#ef4444' }, 3);
+      PixelIconCache.boots = createPixelSprite(["...CC...", "..CCC...", ".CCCC...", "CCCCCCCC", ".CCCCCC."], { 'C': '#38bdf8' }, 3);
+      PixelIconCache.magnet = createPixelSprite(["RR....BB", "RR....BB", "RR....BB", ".RR..BB.", "..RRBB.."], { 'R': '#ef4444', 'B': '#3b82f6' }, 3);
+      PixelIconCache.tome = createPixelSprite([".BBBBBB.", "BPPBPPPB", "BPPBPPPB", "BPPBPPPB", ".BBBBBB."], { 'B': '#78350f', 'P': '#e0e7ff' }, 3);
+      PixelIconCache.greed_pass = createPixelSprite(["..YY....", ".YYYY...", "YYYYYY..", "YYYYYY..", ".YYYY..."], { 'Y': '#fbbf24' }, 3);
+      PixelIconCache.thunder = createPixelSprite(["....Y....", "...YYY...", "..Y.Y.Y..", ".Y..Y..Y.", "....Y....", "...Y.Y...", "..Y...Y..", ".Y.....Y."], { 'Y': '#facc15' }, 3);
+      PixelIconCache.whip = createPixelSprite(["...K....", "..KKK...", ".KWWWK..", "..K.K...", "...K....", "...K....", "...K....", "..K.K..."], { 'K': '#7f1d1d', 'W': '#fca5a5' }, 3);
+      PixelIconCache.bow = createPixelSprite(["...B....", "..BB....", ".BBBB...", "..BB....", "...B....", "...B....", "..B.B...", ".B...B.."], { 'B': '#fef08a' }, 3);
+      PixelIconCache.flask = createPixelSprite(["..GGG..", ".GPPPG.", ".GPPPG.", "..GPG..", "..GPG..", "..GGG..", ".G...G.", ".G...G."], { 'G': '#22c55e', 'P': '#a78bfa' }, 3);
+      PixelIconCache.firering = createPixelSprite(["..RRRR..", ".RWWWWR.", "RWWGGWWR", "RWWGGWWR", ".RWWWWR.", "..RRRR.."], { 'R': '#fb923c', 'W': '#fef3c7', 'G': '#ef4444' }, 3);
+      PixelIconCache.frost = createPixelSprite(["..B.B..", ".BBBBB.", "BB.B.BB", ".BBBBB.", "..B.B..", ".B...B.", "B.....B"], { 'B': '#a5f3fc' }, 3);
+      PixelIconCache.laser = createPixelSprite(["..W..", ".WWW.", "WWWWW", ".WWW.", "..W.."], { 'W': '#38bdf8' }, 3);
+      PixelIconCache.spear = createPixelSprite(["..P..", "..P..", "..P..", "..P..", "..P..", "..P..", ".PPP.", "..P.."], { 'P': '#fef3c7' }, 3);
+      PixelIconCache.skull = createPixelSprite([".BBB.", "BWWWB", "BWWWB", ".BWB.", ".BWB.", "..B.."], { 'B': '#e2e8f0', 'W': '#94a3b8' }, 3);
+      PixelIconCache.clover = createPixelSprite([".L.L.", "LLLLL", ".L.L.", "L...L", ".L.L.", "..L.."], { 'L': '#4ade80' }, 3);
+      PixelIconCache.armor = createPixelSprite([".CCC.", "CCCCC", "CWWWC", "CWWWC", ".CWC.", "..C.."], { 'C': '#94a3b8', 'W': '#e2e8f0' }, 3);
+      PixelIconCache.candle = createPixelSprite(["..C..", ".CCC.", "..C..", "..C..", ".C.C.", ".C.C.", "..C.."], { 'C': '#facc15' }, 3);
+      PixelIconCache.duplicator = createPixelSprite([".RRR.", "R...R", "R.R.R", "R...R", ".RRR.", "..R.."], { 'R': '#c084fc' }, 3);
+
+      // UI
+      PixelIconCache.ui_play = createPixelSprite(["...WWW..", "..WWWW..", "..WWW...", ".YYW....", "YYYY....", ".YY....."], {'W': '#e2e8f0', 'Y': '#facc15'}, 2);
+      PixelIconCache.ui_skull = createPixelSprite([".WWWW.", "WKKWKW", "WWWWWW", ".WWWW.", ".W..W."], {'W': '#c084fc', 'K': '#3b0764'}, 2);
+      PixelIconCache.ui_gold = PixelIconCache.gold_coin;
+      PixelIconCache.ui_map = createPixelSprite(["GG.GGG", "GGBBGG", "GGGGGG", "G.GG.G"], {'G': '#16a34a', 'B': '#38bdf8'}, 3);
+      PixelIconCache.ui_shield = createPixelSprite(["SSSSSS", "SBBbbs", "SBBbbs", ".SBbs.", "..Ss.."], {'S': '#94a3b8', 'B': '#3b82f6', 'b': '#1d4ed8', 's': '#64748b'}, 3);
+      PixelIconCache.ui_sword = createPixelSprite([".......W", "......WW", "S....WW.", ".S..WW..", "..SWW...", "..WWS...", ".WW..S..", "WW....S."], {'W': '#e2e8f0', 'S': '#facc15'}, 2);
+      PixelIconCache.ui_ready = createPixelSprite([".......G", "......GG", ".....GG.", "G...GG..", "GG.GG...", ".GGG....", "..G....."], {'G': '#22c55e'}, 2);
+      PixelIconCache.ui_host = createPixelSprite(["Y..Y..Y.", "YY.YY.YY", "YYYYYYYY", "YYYYYYYY", ".YYYYYY.", ".RRRRRR."], {'Y': '#facc15', 'R': '#dc2626'}, 2);
+      PixelIconCache.ui_exit = createPixelSprite([".WWWWW..", ".WBBBWW.", ".WBBBBW.", ".WBBYBW.", ".WBBBBW.", ".WBBBBW.", ".WWWWWW."], {'W': '#94a3b8', 'B': '#78350f', 'Y': '#facc15'}, 2);
+      PixelIconCache.ui_hero = createPixelSprite(["..WW..", ".WYYW.", "WWYYWW", "WBBBBW", ".WBBW.", "..WW.."], {'W': '#ffffff', 'Y': '#facc15', 'B': '#38bdf8'}, 2);
+      PixelIconCache.ui_globe = createPixelSprite([".BBBB.", "BGGBGB", "BBGGBB", "BBBGGB", ".BBBB."], {'B': '#3b82f6', 'G': '#22c55e'}, 3);
+      PixelIconCache.ui_temple = createPixelSprite(["..YY..", ".YYYY.", "WWWWWW", "W.WW.W", "W.WW.W", "WWWWWW"], {'Y': '#facc15', 'W': '#e2e8f0'}, 2);
+      PixelIconCache.ui_trophy = createPixelSprite(["YYYYYY", ".YYYY.", "..YY..", "..YY..", ".YYYY."], {'Y': '#facc15'}, 3);
+      PixelIconCache.ui_pause = createPixelSprite(["WW..WW", "WW..WW", "WW..WW", "WW..WW"], {'W': '#ffffff'}, 3);
+      PixelIconCache.ui_audio = createPixelSprite(["...W..", "..WW..", ".WWW..", "WWWWWW", "WWWWWW", ".WWW..", "..WW..", "...W.."], {'W': '#ffffff'}, 2);
+      PixelIconCache.ui_alert = createPixelSprite(["..YY..", ".YYYY.", "YYRRYY", "YYRRYY", "YYYYYY", "YYRRYY", ".YYYY."], {'Y': '#facc15', 'R': '#ef4444'}, 2);
+    }
+
+    function initSprites() {
+      const heroMatrix = ["..HHHH..", ".HFFFFH.", "HFFSSFFH", "HFSWWSSF", "HFFSSFFH", ".HABBAH.", "HAABBBAH", "A.ABBA.A", "..LLLL..", "..L..L.."];
+      Object.keys(HEROES).forEach(k => { SpriteCanvasCache[`hero_${k}`] = createPixelSprite(heroMatrix, HEROES[k].colorMap, 3); });
+      SpriteCanvasCache.bat = createPixelSprite(["W......W", "WW.EE.WW", "WWWEEWWW", ".WEEEEW.", "..RRRR..", ".EEEEEE.", "..E..E.."], { 'W': '#475569', 'E': '#64748b', 'R': '#ef4444' }, 3);
+      SpriteCanvasCache.archer = createPixelSprite(["..WW..", ".WGGW.", "WGGGGW", ".WSSW.", ".WSSW.", "..SS.."], { 'W': '#f8fafc', 'G': '#22c55e', 'S': '#4b5563' }, 3);
+      SpriteCanvasCache.brute = createPixelSprite([".RRRR.", "RWWWWR", "RWGGWR", ".WGGW.", ".WWWW.", "..RR.."], { 'R': '#7c2d12', 'W': '#f3f4f6', 'G': '#b91c1c' }, 3);
+      SpriteCanvasCache.imp = createPixelSprite([".PPPP.", "PYYYYP", ".PYYP.", ".Y..Y.", "..PP.."], { 'P': '#a855f7', 'Y': '#facc15' }, 3);
+      SpriteCanvasCache.lich = createPixelSprite([".BBBB.", "BWWWWB", "BWBWB.", ".WWW.", ".B.B.", "..B.."], { 'B': '#67e8f9', 'W': '#e2e8f0' }, 3);
+      SpriteCanvasCache.ghost = createPixelSprite([".GGG.", "GWWWG", "GWWWG", ".WGW.", ".W.W.", "..G.."], { 'G': '#cbd5e1' }, 3);
+      SpriteCanvasCache.gargoyle = createPixelSprite([".RRR.", "RWWWR", "RWGWR", ".WWW.", ".G.G.", "..R.."], { 'R': '#9ca3af', 'W': '#f8fafc', 'G': '#94a3b8' }, 3);
+      SpriteCanvasCache.boss = createPixelSprite(["..YYYY..", ".YRRRRY.", "YRWGGWRY", "YRWGGWRY", ".YRRRRY.", "RRRKKRRR", "R.RKKR.R", "..R..R.."], { 'Y': '#f59e0b', 'R': '#991b1b', 'W': '#fee2e2', 'G': '#ef4444', 'K': '#450a0a' }, 5);
+      SpriteCanvasCache.peerPlayer = createPixelSprite(heroMatrix, { 'H': '#047857', 'F': '#10b981', 'S': '#fde047', 'W': '#ffffff', 'A': '#6ee7b7', 'B': '#059669', 'L': '#064e3b' }, 3);
+    }
+
+    function cloneCanvas(oldCanvas) {
+      if (!oldCanvas) return null;
+      const newCanvas = document.createElement('canvas');
+      newCanvas.width = oldCanvas.width;
+      newCanvas.height = oldCanvas.height;
+      newCanvas.getContext('2d').drawImage(oldCanvas, 0, 0);
+      return newCanvas;
+    }
+
+    function renderAllPixelIcons() {
+      document.querySelectorAll('.pixel-icon').forEach(el => {
+        const iconName = el.getAttribute('data-icon');
+        const canvas = PixelIconCache[iconName];
+        if (canvas) {
+          el.innerHTML = '';
+          el.appendChild(cloneCanvas(canvas));
+        }
+      });
+    }
+
+    let audioCtx = null;
+    let isAudioEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) audioCtx = new AudioContext();
+        } catch (e) {}
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(type) {
+      if (!isAudioEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const createTone = (t, startF, endF, dur, vol) => {
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = t; osc.frequency.setValueAtTime(startF, now);
+        if (endF !== startF) osc.frequency.exponentialRampToValueAtTime(Math.max(10, endF), now + dur);
+        gain.gain.setValueAtTime(vol, now); gain.gain.linearRampToValueAtTime(0, now + dur);
+        osc.start(now); osc.stop(now + dur);
+      };
+      if (type === 'hit') createTone('triangle', 160, 30, 0.05, 0.05);
+      if (type === 'coin') createTone('sine', 987, 1318, 0.12, 0.06);
+      if (type === 'gem') createTone('sine', 850 + Math.random() * 150, 1300, 0.05, 0.03);
+      if (type === 'levelup') createTone('square', 440, 880, 0.18, 0.08);
+      if (type === 'explosion') createTone('sawtooth', 120, 20, 0.25, 0.08);
+      if (type === 'laser') createTone('sine', 1800, 300, 0.08, 0.04);
+    }
+
+    function toggleAudio() {
+      initAudio();
+      isAudioEnabled = !isAudioEnabled;
+      return isAudioEnabled;
+    }
+
+    let toastTimeout = null;
+    function showToast(msg, duration = 3000) {
+      const modal = document.getElementById('customToastModal');
+      const text = document.getElementById('customToastText');
+      if (!modal || !text) return;
+      text.innerText = msg;
+      modal.classList.add('active');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { modal.classList.remove('active'); }, duration);
+    }
+    document.getElementById('customToastBtn').onclick = () => {
+      document.getElementById('customToastModal').classList.remove('active');
+    };
+
+    let gameState = 'MENU', lastTime = performance.now();
+    const camera = { x: 0, y: 0 };
+    let player = {}, enemies = [], bullets = [], enemyProjectiles = [], gems = [], particles = [], floatingTexts = [], lightningStrikes = [], groundZones = [];
+    let sessionGold = 120, totalKills = 0, killCount = 0, highestWave = 1, currentWave = 1, waveTimer = 40;
+    let sharedPartyExp = 0, sharedPartyGold = 0, sharedRevivesRemaining = 1, sharedDrops = [], sharedChallengeFailed = false;
+    let roomCombatEvents = [];
+    let enemySpawnCounter = 0, hasEvolvedAny = false;
+    let selectedHeroKey = 'knight', previewHeroKey = 'knight', selectedMapKey = 'dungeon';
+
+    let isMultiplayer = false, isRoomHost = false, isMyReady = false, currentRoomCode = '';
+    let isLeavingRoom = false;
+    let lobbyPlayers = {}, peers = {}, syncTimer = 0, enemySyncTimer = 0;
+    let upgradePauseDeadline = 0, upgradeReadyPlayers = {};
+    let upgradeSelectionLocked = false;
+    let pendingUpgradeCount = 0;
+    let myPeerId = 'hero_' + Math.random().toString(36).substring(2, 6);
+    let myName = '勇者#' + myPeerId.substring(5);
+
+    // Multi-tab / BroadcastChannel fallback for multi-player instant preview
+    const localBroadcast = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('pixel_legends_ragnarok_bc') : null;
+
+    const keys = { w: false, a: false, s: false, d: false, 1: false, 2: false, 3: false };
+    const joystick = { active: false, id: null, startX: 0, startY: 0, dx: 0, dy: 0, maxR: 45, deadZone: 5 };
+
+    function normalizeKey(rawKey) {
+      const value = (rawKey || '').toLowerCase();
+      if (!value) return '';
+      if (value.startsWith('key')) return value.slice(3);
+      if (value.startsWith('arrow')) return value.replace('arrow', '');
+      return value;
+    }
+
+    window.addEventListener('keydown', e => {
+      const key = normalizeKey(e.key || e.code || '');
+      if (Object.prototype.hasOwnProperty.call(keys, key)) keys[key] = true;
+      initAudio();
+      if (gameState === 'UPGRADE' && !upgradeSelectionLocked && (key === '1' || key === '2' || key === '3')) {
+        const idx = parseInt(key, 10) - 1;
+        const cards = document.querySelectorAll('#skillOptionsList .skill-card');
+        if (cards[idx]) cards[idx].click();
+      }
+    });
+
+    window.addEventListener('keyup', e => {
+      const key = normalizeKey(e.key || e.code || '');
+      if (Object.prototype.hasOwnProperty.call(keys, key)) keys[key] = false;
+    });
+
+    function bindJoystick() {
+      const zone = document.getElementById('joystickZone'), base = document.getElementById('joystickBase'), stick = document.getElementById('joystickStick');
+      zone.addEventListener('touchstart', e => {
+        if (gameState !== 'PLAYING') return;
+        const t = e.changedTouches[0];
+        joystick.id = t.identifier;
+        joystick.active = true;
+        joystick.startX = t.clientX;
+        joystick.startY = t.clientY;
+        joystick.dx = 0; joystick.dy = 0;
+        base.style.left = `${joystick.startX}px`; base.style.top = `${joystick.startY}px`;
+        stick.style.left = `${joystick.startX}px`; stick.style.top = `${joystick.startY}px`;
+        base.style.display = 'block'; stick.style.display = 'block';
+      }, { passive: false });
+
+      zone.addEventListener('touchmove', e => {
+        if (!joystick.active || gameState !== 'PLAYING') return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === joystick.id) {
+            const dx = t.clientX - joystick.startX, dy = t.clientY - joystick.startY;
+            const dist = Math.hypot(dx, dy);
+            if (dist < joystick.deadZone) {
+              joystick.dx = 0; joystick.dy = 0;
+            } else {
+              const clamped = Math.min(dist, joystick.maxR), angle = Math.atan2(dy, dx);
+              joystick.dx = Math.cos(angle) * (clamped / joystick.maxR);
+              joystick.dy = Math.sin(angle) * (clamped / joystick.maxR);
+              stick.style.left = `${joystick.startX + Math.cos(angle) * clamped}px`;
+              stick.style.top = `${joystick.startY + Math.sin(angle) * clamped}px`;
+            }
+            break;
+          }
+        }
+      }, { passive: false });
+
+      const resetJoy = (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === joystick.id) {
+            joystick.active = false; joystick.id = null; joystick.dx = 0; joystick.dy = 0;
+            base.style.display = 'none'; stick.style.display = 'none';
+            break;
+          }
+        }
+      };
+      zone.addEventListener('touchend', resetJoy);
+      zone.addEventListener('touchcancel', resetJoy);
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen-overlay, .modal-overlay').forEach(el => el.classList.remove('active'));
+      if (screenId) {
+        const el = document.getElementById(screenId);
+        if (el) el.classList.add('active');
+      }
+    }
+
+    function updateHpUI(hp, maxHp) {
+      const pct = Math.max(0, (hp / maxHp) * 100);
+      const bar = document.getElementById('hpBar');
+      if (!bar) return;
+      bar.style.width = `${pct}%`;
+      if (pct > 50) bar.style.background = 'linear-gradient(90deg, #22c55e, #16a34a)';
+      else if (pct > 25) bar.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
+      else bar.style.background = 'linear-gradient(90deg, #ef4444, #b91c1c)';
+    }
+
+    function updateExpUI(exp, expNeeded, level) {
+      const pct = Math.min(100, (exp / expNeeded) * 100);
+      const expBar = document.getElementById('expBar');
+      const lvlEl = document.getElementById('levelDisplay');
+      if (expBar) expBar.style.width = `${pct}%`;
+      if (lvlEl) lvlEl.innerText = `LV. ${level}`;
+    }
+
+    function updateGoldUI(amt) {
+      const goldDisplay = document.getElementById('goldDisplay');
+      if (goldDisplay) goldDisplay.innerHTML = `<i class="pixel-icon" data-icon="ui_gold"></i> ${amt}`;
+      const tgs = document.getElementById('talentGoldStatus');
+      if (tgs) tgs.innerText = `目前金幣儲備：🪙 ${amt}`;
+      renderAllPixelIcons();
+    }
+
+    function updateHUD(timer, wave, maxWaves, kills) {
+      const m = Math.floor(Math.max(0, timer) / 60);
+      const s = Math.floor(Math.max(0, timer) % 60);
+      const timeDisplay = document.getElementById('timeDisplay');
+      const waveDisplay = document.getElementById('waveDisplay');
+      const killDisplay = document.getElementById('killDisplay');
+      if (timeDisplay) timeDisplay.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      if (waveDisplay) waveDisplay.innerText = `第 ${wave} / ${maxWaves} 波`;
+      if (killDisplay) killDisplay.innerHTML = `<i class="pixel-icon" data-icon="ui_skull"></i> ${kills}`;
+      renderAllPixelIcons();
+    }
+
+    function updateEquipmentHUD(weaponsObj, passivesObj) {
+      const container = document.getElementById('equipmentHud');
+      if (!container) return;
+      container.innerHTML = '';
+      Object.keys(weaponsObj).forEach(k => {
+        const w = weaponsObj[k];
+        if (w.level > 0) {
+          const slot = document.createElement('div'); slot.className = 'equip-slot';
+          const icon = cloneCanvas(PixelIconCache[w.evolved ? EVOLVED_WEAPONS[w.evolvesInto].iconKey : w.iconKey]);
+          if (icon) slot.appendChild(icon);
+          const badge = document.createElement('span');
+          badge.className = `equip-level ${w.evolved ? 'evolved' : ''}`;
+          badge.innerText = w.evolved ? 'MAX' : String(w.level);
+          slot.appendChild(badge);
+          container.appendChild(slot);
+        }
+      });
+      Object.keys(passivesObj).forEach(k => {
+        const p = passivesObj[k];
+        if (p.level > 0) {
+          const slot = document.createElement('div'); slot.className = 'equip-slot';
+          const icon = cloneCanvas(PixelIconCache[p.iconKey]);
+          if (icon) slot.appendChild(icon);
+          const badge = document.createElement('span');
+          badge.className = 'equip-level';
+          badge.innerText = String(p.level);
+          slot.appendChild(badge);
+          container.appendChild(slot);
+        }
+      });
+    }
+
+    function updatePartyReviveDisplay() {
+      const reviveEl = document.getElementById('partyReviveDisplay');
+      if (!reviveEl) return;
+      const value = isMultiplayer ? Math.max(0, sharedRevivesRemaining) : 0;
+      reviveEl.innerText = `復活：${value}`;
+      reviveEl.style.color = value > 0 ? '#facc15' : '#f87171';
+    }
+
+    function updateHeroStage(heroKey) {
+      const h = HEROES[heroKey];
+      document.getElementById('stageHeroName').innerText = h.name;
+      document.getElementById('stageHeroWeapon').innerText = h.weaponName;
+      document.getElementById('stageHeroHp').innerText = `生命 ${h.baseHp}`;
+      document.getElementById('stageHeroSpeed').innerText = `移速 ${h.baseSpeed}`;
+      document.getElementById('stageHeroTrait').innerText = h.unlocked ? h.traitDesc : `🔒 ${h.unlockReq}`;
+      
+      const pCanvas = document.getElementById('heroPreviewCanvas');
+      if (pCanvas) {
+        const pCtx = pCanvas.getContext('2d');
+        pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+        const sprite = SpriteCanvasCache[`hero_${heroKey}`];
+        if (sprite) pCtx.drawImage(sprite, 0, 0, 24, 30);
+      }
+      
+      const btn = document.getElementById('btnConfirmHero');
+      if (h.unlocked) {
+        btn.disabled = false; btn.innerText = selectedHeroKey === heroKey ? '✨ 當前出戰' : '✅ 選擇出戰'; btn.className = 'action-btn emerald';
+      } else {
+        btn.disabled = true; btn.innerText = '🔒 尚未解鎖'; btn.className = 'action-btn secondary';
+      }
+    }
+
+    function renderCharSelectUI() {
+      const carousel = document.getElementById('heroCarouselContainer');
+      if (!carousel) return;
+      carousel.innerHTML = '';
+      Object.keys(HEROES).forEach(k => {
+        const h = HEROES[k];
+        const card = document.createElement('div');
+        card.className = `hero-tab-card ${previewHeroKey === k ? 'active' : ''} ${!h.unlocked ? 'locked' : ''}`;
+        const c = document.createElement('canvas');
+        c.className = 'hero-tab-canvas'; c.width = 24; c.height = 30;
+        const s = SpriteCanvasCache[`hero_${k}`];
+        if (s) c.getContext('2d').drawImage(s, 0, 0, 24, 30);
+        card.appendChild(c);
+        const name = document.createElement('div');
+        name.className = 'hero-tab-name';
+        name.innerText = h.name.split(' ')[0];
+        card.appendChild(name);
+        if (!h.unlocked) {
+          const lock = document.createElement('div');
+          lock.className = 'hero-tab-name';
+          lock.style.color = '#94a3b8';
+          lock.innerText = '🔒';
+          card.appendChild(lock);
+        }
+        card.onclick = () => {
+          previewHeroKey = k;
+          updateHeroStage(k);
+          renderCharSelectUI();
+        };
+        carousel.appendChild(card);
+      });
+    }
+
+    function renderMapSelectUI() {
+      const container = document.getElementById('mapListContainer');
+      container.innerHTML = '';
+      Object.keys(MAPS).forEach(k => {
+        const m = MAPS[k];
+        const card = document.createElement('div');
+        card.className = `select-card ${selectedMapKey === k ? 'active' : ''}`;
+        card.innerHTML = `<div style="font-weight:bold; color:#f8fafc; font-size:13px; margin-bottom:4px;">${m.name}</div><div style="font-size:11px; color:#94a3b8;">${m.desc}</div>`;
+        card.onclick = () => {
+          selectedMapKey = k;
+          saveGameProgress();
+          renderMapSelectUI();
+        };
+        container.appendChild(card);
+      });
+    }
+
+    function renderTalentsUI() {
+      const list = document.getElementById('talentOptionsList');
+      list.innerHTML = '';
+      Object.keys(Talents).forEach(key => {
+        const t = Talents[key];
+        const cost = Math.round(t.baseCost * Math.pow(t.growth, t.level));
+        const isMax = t.level >= t.max;
+        const canAfford = sessionGold >= cost && !isMax;
+
+        const card = document.createElement('div');
+        card.className = 'skill-card'; card.style.opacity = isMax ? '0.7' : '1';
+
+        const iconBox = document.createElement('div'); iconBox.className = 'skill-icon-box';
+        const iconCanvas = cloneCanvas(PixelIconCache[t.iconKey]);
+        if (iconCanvas) iconBox.appendChild(iconCanvas);
+
+        const info = document.createElement('div');
+        info.className = 'skill-info';
+        info.innerHTML = `<h4>${t.name} (等級 ${t.level}/${t.max})</h4><p>${t.desc}</p>`;
+
+        const btn = document.createElement('button');
+        btn.className = `action-btn ${canAfford ? 'gold' : ''}`;
+        btn.style.padding = '5px 10px'; btn.style.fontSize = '11px'; btn.style.margin = '0';
+        btn.disabled = !canAfford || isMax;
+        btn.innerText = isMax ? '已滿級' : `🪙 ${cost}`;
+        btn.onclick = () => {
+          if (sessionGold >= cost && !isMax) {
+            sessionGold -= cost;
+            t.level++;
+            playSound('coin');
+            updateGoldUI(sessionGold);
+            saveGameProgress();
+            renderTalentsUI();
+          }
+        };
+
+        card.appendChild(iconBox);
+        card.appendChild(info);
+        card.appendChild(btn);
+        list.appendChild(card);
+      });
+    }
+
+    function renderAchievementsUI() {
+      const container = document.getElementById('achievementListContainer');
+      container.innerHTML = '';
+      ACHIEVEMENTS.forEach(ach => {
+        const card = document.createElement('div');
+        card.className = 'skill-card';
+        card.style.borderColor = ach.unlocked ? '#a855f7' : '#1e293b';
+        card.innerHTML = `
+          <div class="skill-icon-box" style="font-size:16px;">${ach.unlocked ? '🏆' : '🔒'}</div>
+          <div class="skill-info">
+            <h4>${ach.title} <span style="font-size:10px; color:${ach.unlocked ? '#4ade80' : '#94a3b8'}">${ach.unlocked ? '【已達成】' : '【未達成】'}</span></h4>
+            <p>${ach.desc}</p>
+            <p style="color:#facc15; font-size:10px; margin-top:2px;">獎勵：${ach.reward}</p>
+          </div>`;
+        container.appendChild(card);
+      });
+    }
+
+    function applyCloudData(data) {
+      if (!data) return;
+      if (data.gold !== undefined) sessionGold = data.gold;
+      if (data.highestWave !== undefined) highestWave = data.highestWave;
+      if (data.totalKills !== undefined) totalKills = data.totalKills;
+      if (data.hasEvolvedAny !== undefined) hasEvolvedAny = data.hasEvolvedAny;
+      if (data.selectedHeroKey) selectedHeroKey = data.selectedHeroKey;
+      if (data.selectedMapKey) selectedMapKey = data.selectedMapKey;
+      if (data.talents) Object.keys(data.talents).forEach(k => { if(Talents[k]) Talents[k].level = data.talents[k]; });
+      if (data.unlockedHeroes) Object.keys(data.unlockedHeroes).forEach(k => { if(HEROES[k]) HEROES[k].unlocked = data.unlockedHeroes[k]; });
+      if (data.unlockedAchs) {
+        data.unlockedAchs.forEach(savedAch => {
+          const match = ACHIEVEMENTS.find(a => a.id === savedAch.id);
+          if (match) match.unlocked = savedAch.unlocked;
+        });
+      }
+    }
+
+    function saveGameProgress() {
+      const saveData = {
+        gold: sessionGold, highestWave, totalKills, hasEvolvedAny, selectedHeroKey, selectedMapKey,
+        talents: Object.keys(Talents).reduce((a, k) => ({...a, [k]: Talents[k].level}), {}),
+        unlockedHeroes: Object.keys(HEROES).reduce((a, k) => ({...a, [k]: HEROES[k].unlocked}), {}),
+        unlockedAchs: ACHIEVEMENTS.map(a => ({ id: a.id, unlocked: a.unlocked }))
+      };
+      localStorage.setItem('RAGNAROK_SAVE', JSON.stringify(saveData));
+      if (currentUser) {
+        setDoc(doc(db, "users", currentUser.uid), saveData, { merge: true }).catch(()=>{});
+      }
+    }
+
+    function checkAchievements() {
+      const state = { killCount, totalKills, currentWave, sessionGold, hasEvolvedAny };
+      ACHIEVEMENTS.forEach(ach => {
+        if (!ach.unlocked && ach.check(state)) {
+          ach.unlocked = true;
+          if (ach.onUnlock) ach.onUnlock();
+          floatingTexts.push({ x: player.x, y: player.y - 60, text: `🏆 成就解鎖：${ach.title}`, color: '#facc15', size: 18, vy: -1.2, life: 2.5 });
+          playSound('levelup');
+          saveGameProgress();
+        }
+      });
+    }
+
+    let currentRoomRef = null;
+    let myPlayerRef = null;
+    let currentRoomListener = null;
+
+    function getPartySize() {
+      return isMultiplayer ? Math.max(1, Object.keys(lobbyPlayers || {}).length || 1) : 1;
+    }
+
+    function broadcastLocal(type, payload) {
+      if (localBroadcast) {
+        try { localBroadcast.postMessage({ type, roomCode: currentRoomCode, senderId: myPeerId, payload }); } catch(e){}
+      }
+    }
+
+    if (localBroadcast) {
+      localBroadcast.onmessage = (e) => {
+        const msg = e.data;
+        if (!msg || msg.roomCode !== currentRoomCode || msg.senderId === myPeerId) return;
+        if (msg.type === 'PLAYER_MOVE') {
+          const p = msg.payload;
+          if (!peers[p.id]) peers[p.id] = { ...p, currentX: p.x, currentY: p.y, targetX: p.x, targetY: p.y, lastSeen: Date.now() };
+          else {
+            peers[p.id].targetX = p.x; peers[p.id].targetY = p.y;
+            peers[p.id].hp = p.hp; peers[p.id].facingX = p.facingX;
+            peers[p.id].attackPulse = p.attackPulse;
+            peers[p.id].lastSeen = Date.now();
+          }
+        } else if (msg.type === 'COMBAT_HIT' && isRoomHost) {
+          // Guest hits an enemy, applied on host!
+          const { enemyId, damage, color } = msg.payload;
+          const target = enemies.find(en => en.id === enemyId && !en.dead);
+          if (target) damageEnemy(target, damage, color);
+        } else if (msg.type === 'ENEMY_SYNC' && !isRoomHost) {
+          applyRemoteEnemies(msg.payload.enemies);
+        }
+      };
+    }
+
+    async function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost = false) {
+      isLeavingRoom = false;
+      currentRoomCode = roomCode;
+      isRoomHost = isHost;
+      isMyReady = isHost;
+
+      try {
+        currentRoomRef = ref(rtdb, `rooms/${roomCode}`);
+        myPlayerRef = ref(rtdb, `rooms/${roomCode}/players/${playerData.id}`);
+
+        const roomSnapshot = await get(currentRoomRef);
+        if (isHost) {
+          if (roomSnapshot.exists()) {
+            return { ok: false, reason: 'ROOM_EXISTS' };
+          }
+          const initialStatus = {
+            isPlaying: false, mapKey: selectedMapKey, revivesRemaining: 1, partyExp: 0, partyGold: 0,
+            drops: [], challengeFailed: false, upgradeReadyPlayers: {}, isUpgradePaused: false, upgradePauseDeadline: 0
+          };
+          await set(currentRoomRef, { status: initialStatus, players: {} });
+        } else if (!roomSnapshot.exists()) {
+          return { ok: false, reason: 'ROOM_NOT_FOUND' };
+        }
+
+        onDisconnect(myPlayerRef).remove().catch(()=>{});
+        await set(myPlayerRef, playerData);
+
+        currentRoomListener = onValue(currentRoomRef, (snapshot) => {
+          const data = snapshot.val() || {};
+          const players = data.players || {};
+          onRoomUpdate(players, data.status || {});
+        });
+
+        return { ok: true, roomCode };
+      } catch (error) {
+        console.warn('Realtime database offline or restricted, running in local fallback mode:', error);
+        // Local multi-tab fallback
+        setTimeout(() => {
+          onRoomUpdate({ [myPeerId]: playerData }, { isPlaying: false, mapKey: selectedMapKey });
+        }, 50);
+        return { ok: true, roomCode, localMode: true };
+      }
+    }
+
+    function updateRoomStatus(statusPatch) {
+      if (!currentRoomRef) return;
+      const statusUpdates = Object.fromEntries(
+        Object.entries(statusPatch).map(([key, value]) => [`status/${key}`, value])
+      );
+      updateDb(currentRoomRef, statusUpdates).catch(()=>{});
+    }
+
+    function syncPlayerPosition(x, y, hp, facingX, level, maxHp, attackPulse = 0) {
+      if (myPlayerRef) {
+        updateDb(myPlayerRef, { x, y, hp, maxHp, facingX, level, attackPulse, lastSeen: Date.now() }).catch(()=>{});
+      }
+      broadcastLocal('PLAYER_MOVE', { id: myPeerId, x, y, hp, maxHp, facingX, level, attackPulse });
+    }
+
+    function syncLobbyState(isReady, heroKey) {
+      if (myPlayerRef) updateDb(myPlayerRef, { isReady, heroKey }).catch(()=>{});
+    }
+
+    function setRoomPlayingStatus(isPlaying, mapKey) {
+      updateRoomStatus({ isPlaying, mapKey, challengeFailed: false });
+    }
+
+    function leaveRemoteRoom() {
+      if (currentRoomRef && currentRoomListener) {
+        off(currentRoomRef, 'value', currentRoomListener);
+      }
+      if (myPlayerRef) remove(myPlayerRef).catch(()=>{});
+      currentRoomRef = null; myPlayerRef = null; currentRoomListener = null;
+    }
+
+    function syncPartyRoomState(force = false) {
+      if (!isMultiplayer || !currentRoomCode) return;
+      const partySize = getPartySize();
+      const payload = {
+        isPlaying: true,
+        mapKey: selectedMapKey,
+        revivesRemaining: Math.max(0, sharedRevivesRemaining),
+        partyExp: Number(sharedPartyExp || player.exp || 0),
+        partyGold: Number(sharedPartyGold || sessionGold || 0),
+        drops: Array.isArray(sharedDrops) ? sharedDrops.slice(-50) : [],
+        challengeFailed: sharedChallengeFailed,
+        isUpgradePaused: !!upgradePauseDeadline,
+        upgradePauseDeadline: upgradePauseDeadline || 0
+      };
+      if (isRoomHost) {
+        payload.enemies = enemies.filter(enemy => enemy && !enemy.dead).map(enemy => ({
+          id: enemy.id, x: enemy.x, y: enemy.y, type: enemy.type, hp: enemy.hp, maxHp: enemy.maxHp,
+          speed: enemy.speed, radius: enemy.radius, damage: enemy.damage, slowTimer: enemy.slowTimer || 0, poisonTimer: enemy.poisonTimer || 0
+        }));
+        broadcastLocal('ENEMY_SYNC', { enemies: payload.enemies });
+      }
+      updateRoomStatus(payload);
+    }
+
+    function applyRemoteEnemies(remoteEnemies) {
+      if (!remoteEnemies) return;
+      const existingMap = new Map(enemies.map(e => [e.id, e]));
+      const nextList = [];
+      remoteEnemies.forEach(re => {
+        let e = existingMap.get(re.id);
+        if (e) {
+          e.x = re.x; e.y = re.y; e.hp = re.hp; e.maxHp = re.maxHp;
+          e.slowTimer = re.slowTimer || 0; e.poisonTimer = re.poisonTimer || 0;
+          nextList.push(e);
+        } else {
+          nextList.push({ ...re, dead: false });
+        }
+      });
+      enemies = nextList;
+    }
+
+    function resolvePlayerDefeat() {
+      if (isMultiplayer) {
+        if (sharedRevivesRemaining > 0) {
+          sharedRevivesRemaining = Math.max(0, sharedRevivesRemaining - 1);
+          player.hp = player.maxHp * 0.6;
+          player.x = 0; player.y = 0; player.invulnerableTimer = 2.5;
+          floatingTexts.push({ x: player.x, y: player.y - 24, text: `復活！剩餘 ${sharedRevivesRemaining} 次`, color: '#facc15', size: 16, life: 1.5, vy: -1.5 });
+          updateHpUI(player.hp, player.maxHp);
+          updatePartyReviveDisplay();
+          syncPartyRoomState(false);
+          return true;
+        }
+        triggerPartyFailure();
+        return false;
+      }
+
+      gameState = 'GAMEOVER';
+      showEndScreen();
+      saveGameProgress();
+      return false;
+    }
+
+    function triggerPartyFailure() {
+      if (sharedChallengeFailed) return;
+      sharedChallengeFailed = true;
+      sharedRevivesRemaining = 0;
+      updateRoomStatus({ isPlaying: false, revivesRemaining: 0, challengeFailed: true });
+      const endTitle = document.getElementById('endTitle');
+      const endDesc = document.getElementById('endDesc');
+      if (endTitle) endTitle.innerText = '挑戰失敗';
+      if (endDesc) endDesc.innerHTML = `隊伍共享復活次數已耗盡！<br>生存至第 ${currentWave} 波`;
+      showScreen('endModal');
+    }
+
+    function resumeAfterUpgrade() {
+      upgradePauseDeadline = 0;
+      upgradeReadyPlayers = {};
+      upgradeSelectionLocked = false;
+      const waitEl = document.getElementById('upgradeWaitStatus');
+      if (waitEl) waitEl.classList.remove('visible');
+      showScreen(null);
+      gameState = 'PLAYING';
+      lastTime = performance.now();
+
+      // Check if another level up is queued
+      if (pendingUpgradeCount > 0) {
+        pendingUpgradeCount--;
+        setTimeout(() => showUpgradeMenu(), 150);
+      }
+    }
+
+    function showLobbyUI() {
+      showScreen('multiLobbyScreen');
+      document.getElementById('lobbyRoomCodeText').innerText = currentRoomCode;
+      
+      const carousel = document.getElementById('lobbyHeroCarousel');
+      carousel.innerHTML = '';
+      Object.keys(HEROES).forEach(k => {
+        const h = HEROES[k];
+        const card = document.createElement('div');
+        card.className = `hero-tab-card ${selectedHeroKey === k ? 'active' : ''} ${!h.unlocked ? 'locked' : ''}`;
+        const c = document.createElement('canvas');
+        c.className = 'hero-tab-canvas'; c.width = 24; c.height = 30;
+        const s = SpriteCanvasCache[`hero_${k}`];
+        if (s) c.getContext('2d').drawImage(s, 0, 0, 24, 30);
+        card.appendChild(c);
+        const name = document.createElement('div');
+        name.className = 'hero-tab-name';
+        name.innerText = h.name.split(' ')[0];
+        card.appendChild(name);
+        if (h.unlocked) {
+          card.onclick = () => {
+            selectedHeroKey = k;
+            if (lobbyPlayers[myPeerId]) lobbyPlayers[myPeerId].heroKey = k;
+            syncLobbyState(isMyReady, selectedHeroKey);
+            showLobbyUI();
+          };
+        }
+        carousel.appendChild(card);
+      });
+
+      const hostBtn = document.getElementById('btnHostStartGame'), guestBtn = document.getElementById('btnGuestToggleReady');
+      if (isRoomHost) {
+        hostBtn.style.display = 'block'; guestBtn.style.display = 'none';
+        const allReady = Object.values(lobbyPlayers).every(p => p.isHost || p.isReady);
+        hostBtn.disabled = !allReady;
+        hostBtn.innerHTML = allReady ? '<i class="pixel-icon" data-icon="ui_sword"></i> 🚀 開始戰鬥' : '⏳ 等待隊員準備...';
+      } else {
+        hostBtn.style.display = 'none'; guestBtn.style.display = 'block';
+        guestBtn.innerHTML = isMyReady ? '<i class="pixel-icon" data-icon="ui_exit"></i> 取消準備' : '<i class="pixel-icon" data-icon="ui_ready"></i> 準備就緒';
+      }
+      renderAllPixelIcons();
+      
+      const container = document.getElementById('lobbyPlayerList');
+      container.innerHTML = '';
+      document.getElementById('lobbyPlayerCount').innerText = Object.keys(lobbyPlayers).length;
+      Object.values(lobbyPlayers).forEach(p => {
+        const card = document.createElement('div'); card.className = `lobby-player-card ${p.isHost ? 'host' : (p.isReady ? 'ready' : '')}`;
+        const cvs = document.createElement('canvas'); cvs.width = 24; cvs.height = 30; cvs.style.width = '32px'; cvs.style.height = '32px';
+        const sprite = SpriteCanvasCache[`hero_${p.heroKey}`];
+        if(sprite) cvs.getContext('2d').drawImage(sprite, 0, 0, 24, 30);
+        const nameEl = document.createElement('div');
+        nameEl.style.fontSize = '11px'; nameEl.style.fontWeight = 'bold'; nameEl.style.color = '#f8fafc';
+        nameEl.innerText = p.name.split(' ')[0];
+        const tag = p.isHost ? '👑 房主' : (p.isReady ? '🟢 已準備' : '🟡 準備中');
+        const tagEl = document.createElement('span');
+        tagEl.className = `lobby-status-tag ${p.isHost ? 'host' : (p.isReady ? 'ready' : 'waiting')}`;
+        tagEl.innerText = tag;
+        card.appendChild(cvs); card.appendChild(nameEl); card.appendChild(tagEl);
+        container.appendChild(card);
+      });
+    }
+
+    function joinLobby(code, asHost) {
+      if(!code) {
+        showToast('請輸入有效的 6 位房間代碼！');
+        return;
+      }
+      initAudio();
+      const localSelf = { id: myPeerId, name: myName, heroKey: selectedHeroKey, isHost: asHost, isReady: asHost, x: 0, y: 0, hp: 100, maxHp: 100, facingX: 1, level: 1 };
+      lobbyPlayers = { [myPeerId]: localSelf };
+      showLobbyUI();
+
+      joinRemoteRoom(code, localSelf, (playersData, status) => {
+        if (isLeavingRoom || currentRoomCode !== code) return;
+        lobbyPlayers = playersData || { [myPeerId]: localSelf };
+        if (status && typeof status.revivesRemaining === 'number') sharedRevivesRemaining = status.revivesRemaining;
+        if (status && typeof status.partyExp === 'number') {
+          sharedPartyExp = status.partyExp;
+          player.exp = sharedPartyExp;
+          updateExpUI(player.exp, player.expNeeded, player.level);
+        }
+        if (status && typeof status.partyGold === 'number') {
+          sharedPartyGold = status.partyGold;
+          sessionGold = sharedPartyGold;
+          updateGoldUI(sessionGold);
+        }
+        if (status && Array.isArray(status.drops)) sharedDrops = status.drops;
+        if (status && Array.isArray(status.enemies) && isMultiplayer && !isRoomHost) {
+          applyRemoteEnemies(status.enemies);
+        }
+        if (status && status.isPlaying && gameState !== 'PLAYING') {
+          selectedMapKey = status.mapKey || 'dungeon';
+          isMultiplayer = true;
+          startGame();
+        } else {
+          // Update peers
+          const now = Date.now();
+          Object.keys(playersData).forEach(id => {
+            if (id === myPeerId) return;
+            const remote = playersData[id];
+            if (!peers[id]) {
+              peers[id] = { ...remote, currentX: remote.x, currentY: remote.y, targetX: remote.x, targetY: remote.y, lastSeen: now };
+            } else {
+              peers[id].targetX = remote.x; peers[id].targetY = remote.y;
+              peers[id].hp = remote.hp; peers[id].facingX = remote.facingX;
+              peers[id].attackPulse = remote.attackPulse || 0;
+              peers[id].lastSeen = now;
+            }
+          });
+          if (gameState === 'MENU') showLobbyUI();
+        }
+        updatePartyReviveDisplay();
+      }, asHost).then(res => {
+        if (!res.ok) {
+          if (res.reason === 'ROOM_NOT_FOUND') showToast('此房間代碼不存在，請確認後再試！');
+          else if (res.reason === 'ROOM_EXISTS') showToast('此房間代碼已存在，請更換代碼！');
+          else showToast('無法加入房間，已轉為本機模式。');
+          showScreen('multiMatchScreen');
+        }
+      });
+    }
+
+    function startGame() {
+      showScreen(null);
+      const hud = document.getElementById('hud');
+      const minimap = document.getElementById('minimapWrapper');
+      const pauseBtn = document.getElementById('pauseBtn');
+      if (hud) hud.style.display = 'flex';
+      if (minimap) minimap.style.display = 'block';
+      if (pauseBtn) pauseBtn.innerHTML = '<i class="pixel-icon" data-icon="ui_pause"></i>';
+      peers = {};
+
+      enemies = []; bullets = []; enemyProjectiles = []; gems = []; particles = []; floatingTexts = []; groundZones = []; lightningStrikes = [];
+      killCount = 0; currentWave = 1; waveTimer = 40; enemySpawnCounter = 0; pendingUpgradeCount = 0;
+
+      const hero = HEROES[selectedHeroKey];
+      // Trait bonuses
+      let hpMult = 1 + Talents.hp.level * Talents.hp.value;
+      if (hero.id === 'knight') hpMult *= 1.2; // 亞瑟: +20% HP
+      const hpBase = hero.baseHp * hpMult;
+
+      let spdMult = 1 + Talents.speed.level * Talents.speed.value;
+      if (hero.id === 'rogue') spdMult *= 1.2; // 影刃: +20% Speed
+
+      player = { 
+        x: 0, y: 0, size: 24, hp: hpBase, maxHp: hpBase,
+        speed: hero.baseSpeed * spdMult, 
+        level: 1, exp: 0, expNeeded: 5, facingX: 1, facingY: 0, invulnerableTimer: 0, attackPulse: 0,
+        damageMult: (1 + Talents.dmg.level * Talents.dmg.value) * (hero.id === 'mage' ? 1.1 : 1.0),
+        cooldownMult: (1 - Talents.cooldown.level * Talents.cooldown.value) * (hero.id === 'mage' ? 0.85 : 1.0),
+        orbAngle: 0
+      };
+
+      Object.keys(WEAPONS).forEach(k => { WEAPONS[k].level = (k === hero.startingWeapon ? 1 : 0); WEAPONS[k].evolved = false; WEAPONS[k].timer = 0; });
+      Object.keys(PASSIVES).forEach(k => PASSIVES[k].level = 0);
+
+      if (isMultiplayer) {
+        sharedPartyExp = player.exp;
+        sharedPartyGold = sessionGold;
+        sharedRevivesRemaining = Math.max(1, getPartySize());
+        sharedDrops = [];
+        sharedChallengeFailed = false;
+        enemySyncTimer = 0;
+        syncPartyRoomState(true);
+      }
+      updatePartyReviveDisplay();
+      updateHpUI(player.hp, player.maxHp);
+      updateExpUI(player.exp, player.expNeeded, player.level);
+      updateGoldUI(sessionGold);
+      updateEquipmentHUD(WEAPONS, PASSIVES);
+      document.getElementById('heroBadge').innerText = hero.name.split(' ')[0];
+
+      gameState = 'PLAYING';
+      lastTime = performance.now();
+    }
+
+    function spawnEnemy() {
+      const map = MAPS[selectedMapKey] || MAPS.dungeon;
+      const angle = Math.random() * Math.PI * 2, dist = Math.max(window.innerWidth, window.innerHeight) * 0.65 + 50;
+      
+      // Boss check on Wave 10, 25, 50, 100
+      const isBossWave = (currentWave % 10 === 0);
+      const isBossSpawned = enemies.some(e => e.isBoss && !e.dead);
+
+      if (isBossWave && !isBossSpawned) {
+        const bossHp = 800 * (1 + currentWave * 0.5) * map.enemyHp;
+        enemies.push({
+          id: `boss_${Date.now()}`,
+          isBoss: true,
+          x: player.x + Math.cos(angle)*dist,
+          y: player.y + Math.sin(angle)*dist,
+          type: 'boss',
+          hp: bossHp, maxHp: bossHp,
+          speed: 1.1 * map.enemySpeed,
+          radius: 30,
+          damage: 32 + Math.floor(currentWave * 2),
+          shootTimer: 0, slowTimer: 0, poisonTimer: 0
+        });
+        showToast(`⚠️ 警告：第 ${currentWave} 波領主泰坦降臨！`, 4000);
+        playSound('explosion');
+        return;
+      }
+
+      const types = ['bat'];
+      if (currentWave >= 2) types.push('archer');
+      if (currentWave >= 4) types.push('brute', 'imp');
+      if (currentWave >= 7) types.push('lich', 'ghost');
+      if (currentWave >= 12) types.push('gargoyle');
+      const type = types[Math.floor(Math.random() * types.length)];
+      const hpConfig = { bat: 20, archer: 38, brute: 120, imp: 28, lich: 85, ghost: 45, gargoyle: 95 };
+      const speedConfig = { bat: 2.2, archer: 1.4, brute: 1.1, imp: 2.6, lich: 1.2, ghost: 2.8, gargoyle: 1.5 };
+      let hp = (hpConfig[type] || 25) * (1 + currentWave * 0.28) * map.enemyHp;
+
+      enemies.push({
+        id: `enemy_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+        x: player.x + Math.cos(angle)*dist,
+        y: player.y + Math.sin(angle)*dist,
+        type, hp, maxHp: hp,
+        speed: (speedConfig[type] || 1.5) * map.enemySpeed,
+        radius: (type === 'brute' || type === 'lich') ? 18 : 12,
+        damage: 12 + Math.floor(currentWave * 1.5),
+        shootTimer: 0, slowTimer: 0, poisonTimer: 0
+      });
+    }
+
+    function damageEnemy(e, dmg, color = '#fff') {
+      if (!e || e.dead) return;
+      e.hp -= dmg;
+      floatingTexts.push({ x: e.x, y: e.y - 10, text: Math.round(dmg), color, size: 14, life: 0.6, vy: -1.2 });
+      playSound('hit');
+
+      // Guest damage sync to host
+      if (isMultiplayer && !isRoomHost) {
+        broadcastLocal('COMBAT_HIT', { enemyId: e.id, damage: dmg, color });
+      }
+
+      // Hero: 希瓦娜 (Frost) slows on every attack
+      if (selectedHeroKey === 'frost') {
+        e.slowTimer = Math.max(e.slowTimer || 0, 1.5);
+      }
+
+      if (e.hp <= 0 && !e.dead) {
+        e.dead = true; killCount++; totalKills++;
+
+        // Hero: 弗拉德 (Vampire) 6% lifesteal
+        if (selectedHeroKey === 'vampire' && Math.random() < 0.06) {
+          player.hp = Math.min(player.maxHp, player.hp + 1);
+          updateHpUI(player.hp, player.maxHp);
+          floatingTexts.push({ x: player.x, y: player.y - 20, text: '+1 HP', color: '#ef4444', size: 13, life: 0.8, vy: -1 });
+        }
+
+        // Hero: 格里姆 (Grim) spawns homing wisp
+        if (selectedHeroKey === 'grim' && Math.random() < 0.35) {
+          bullets.push({
+            x: e.x, y: e.y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+            radius: 8, color: '#c084fc', damage: 60 * player.damageMult, pierce: 2, life: 2.0, type: 'skull'
+          });
+        }
+
+        const goldBonus = (1 + Talents.greed.level * Talents.greed.value) * (1 + PASSIVES.greed_pass.level * 0.3);
+        const expBase = e.isBoss ? 20 : ((e.type === 'brute' || e.type === 'lich') ? 4 : 1);
+        const expValue = Math.max(1, Math.round(expBase * (1 + currentWave * 0.12)));
+        const drop = (Math.random() < 0.22 || e.isBoss) 
+          ? { x: e.x + 8, y: e.y, type: 'coin', val: Math.round((e.isBoss ? 30 : 5) * goldBonus), id: `${Date.now()}-${Math.random()}` }
+          : { x: e.x, y: e.y, type: 'gem', val: expValue, id: `${Date.now()}-${Math.random()}` };
+
+        gems.push(drop);
+        if (isMultiplayer) {
+          sharedDrops.push(drop);
+          syncPartyRoomState(true);
+        }
+        checkAchievements();
+      }
+    }
+
+    function addExp(amount) {
+      if (isMultiplayer) {
+        sharedPartyExp += amount;
+        player.exp = sharedPartyExp;
+        syncPartyRoomState(true);
+      } else {
+        player.exp += amount;
+      }
+      playSound('gem');
+      while (player.exp >= player.expNeeded) {
+        player.exp -= player.expNeeded;
+        player.level++;
+        player.expNeeded = Math.round(player.expNeeded * 1.35 + 4);
+        if (gameState === 'UPGRADE') {
+          pendingUpgradeCount++;
+        } else {
+          showUpgradeMenu();
+        }
+      }
+      updateExpUI(player.exp, player.expNeeded, player.level);
+    }
+
+    function showEndScreen() {
+      const endTitle = document.getElementById('endTitle');
+      const endDesc = document.getElementById('endDesc');
+      endTitle.innerText = currentWave >= 100 ? '諸神黃昏・終極通關！' : '戰鬥結束';
+      endDesc.innerHTML = `擊殺數：${killCount}<br>最高波次：第 ${currentWave} 波<br>獲得金幣：🪙 ${sessionGold}`;
+      showScreen('endModal');
+    }
+
+    function showUpgradeMenu() {
+      if (gameState === 'UPGRADE') return;
+      gameState = 'UPGRADE';
+      upgradeSelectionLocked = false;
+      playSound('levelup');
+      const options = [];
+
+      // Evolution options
+      Object.keys(WEAPONS).forEach(k => {
+        const w = WEAPONS[k];
+        if (w.level >= w.maxLevel && !w.evolved && PASSIVES[w.requiredPassive]?.level >= 1) {
+          const evo = EVOLVED_WEAPONS[w.evolvesInto];
+          options.push({ type: 'evolve', id: k, weight: 5, name: evo.name, iconKey: evo.iconKey, desc: evo.desc, apply: () => { w.evolved = true; hasEvolvedAny = true; } });
+        } else if (w.level > 0 && w.level < w.maxLevel && !w.evolved) {
+          options.push({ type: 'weapon', id: k, weight: 3, name: `${w.name} (LV ${w.level + 1})`, iconKey: w.iconKey, desc: '提升威力、射速與攻擊數量', apply: () => w.level++ });
+        } else if (w.level === 0) {
+          options.push({ type: 'weapon', id: k, weight: 1, name: w.name, iconKey: w.iconKey, desc: w.desc, apply: () => w.level++ });
+        }
+      });
+
+      Object.keys(PASSIVES).forEach(k => {
+        const p = PASSIVES[k];
+        if (p.level < p.maxLevel) {
+          options.push({ type: 'passive', id: k, weight: p.level > 0 ? 3 : 1, name: `${p.name} (LV ${p.level + 1})`, iconKey: p.iconKey, desc: p.desc, apply: () => p.level++ });
+        }
+      });
+
+      const pool = [...options];
+      const selected = [];
+      while (selected.length < 3 && pool.length > 0) {
+        const totalWeight = pool.reduce((sum, opt) => sum + (opt.weight || 1), 0);
+        let roll = Math.random() * totalWeight;
+        const selIdx = pool.findIndex(opt => {
+          roll -= (opt.weight || 1);
+          return roll <= 0;
+        });
+        selected.push(pool.splice(selIdx < 0 ? 0 : selIdx, 1)[0]);
+      }
+
+      while (selected.length < 3) {
+        selected.push({ type: 'gold', name: '諸神賜福 (金幣)', iconKey: 'gold_coin', desc: '立即獲得 150 枚金幣', apply: () => { sessionGold += 150; updateGoldUI(sessionGold); } });
+      }
+
+      const list = document.getElementById('skillOptionsList');
+      list.innerHTML = '';
+      selected.forEach((opt, idx) => {
+        const card = document.createElement('div');
+        card.className = `skill-card ${opt.type === 'evolve' ? 'evolve' : ''}`;
+        const iconBox = document.createElement('div'); iconBox.className = 'skill-icon-box';
+        const iconCanvas = cloneCanvas(PixelIconCache[opt.iconKey] || PixelIconCache.wand);
+        if (iconCanvas) iconBox.appendChild(iconCanvas);
+        const info = document.createElement('div');
+        info.className = 'skill-info';
+        info.innerHTML = `<h4>[${idx + 1}] ${opt.name}</h4><p>${opt.desc}</p>`;
+
+        card.onclick = () => {
+          if (upgradeSelectionLocked) return;
+          upgradeSelectionLocked = true;
+          opt.apply();
+          updateEquipmentHUD(WEAPONS, PASSIVES);
+          saveGameProgress();
+          checkAchievements();
+          resumeAfterUpgrade();
+        };
+
+        card.appendChild(iconBox);
+        card.appendChild(info);
+        list.appendChild(card);
+      });
+
+      showScreen('upgradeModal');
+    }
+
+    function updateWeapons(dt) {
+      const dmgBonus = player.damageMult * (1 + PASSIVES.power.level * 0.2);
+      const cdBonus = player.cooldownMult * Math.max(0.35, 1 - PASSIVES.tome.level * 0.12);
+      // Cyborg trait + passives
+      const extra = PASSIVES.duplicator.level + (selectedHeroKey === 'cyborg' ? 1 : 0);
+      // Alchemist trait + candle passive
+      const area = (1 + PASSIVES.candle.level * 0.25) * (selectedHeroKey === 'alchemist' ? 1.3 : 1.0);
+      // Ranger trait pierce bonus
+      const heroPierce = selectedHeroKey === 'ranger' ? 1 : 0;
+
+      const activeEnemies = enemies.filter(e => !e.dead);
+
+      // 1. 奧術飛彈 (Wand)
+      const w = WEAPONS.wand;
+      if (w.level > 0) {
+        w.timer += dt;
+        if (w.timer >= (w.evolved ? 0.11 : Math.max(0.18, 0.75 - w.level * 0.1)) * cdBonus && activeEnemies.length > 0) {
+          w.timer = 0; player.attackPulse = 0.18;
+          const t = activeEnemies[0], a = Math.atan2(t.y - player.y, t.x - player.x);
+          const cnt = (w.evolved ? 3 : (1 + Math.floor(w.level / 2))) + extra;
+          for(let i = 0; i < cnt; i++) {
+            bullets.push({
+              x: player.x, y: player.y,
+              vx: Math.cos(a + (i * 0.16)) * 9, vy: Math.sin(a + (i * 0.16)) * 9,
+              radius: (w.evolved ? 7 : 5) * area,
+              color: w.evolved ? '#f59e0b' : '#38bdf8',
+              damage: (w.evolved ? 48 : 20 + w.level * 8) * dmgBonus,
+              pierce: (w.evolved ? 3 : 1) + heroPierce,
+              life: 1.8
+            });
+          }
+        }
+      }
+
+      // 2. 聖靈光球 (Orbs)
+      const o = WEAPONS.orbs;
+      if (o.level > 0) {
+        player.orbAngle += (o.evolved ? 4.5 : 2.5) * dt;
+        o.timer += dt;
+        if(o.timer >= 0.16) {
+          o.timer = 0;
+          const cnt = (o.evolved ? 6 : 2 + o.level) + extra, rad = (o.evolved ? 110 : 75) * area;
+          for(let i = 0; i < cnt; i++) {
+            const ox = player.x + Math.cos(player.orbAngle + i * (Math.PI * 2 / cnt)) * rad;
+            const oy = player.y + Math.sin(player.orbAngle + i * (Math.PI * 2 / cnt)) * rad;
+            enemies.forEach(e => {
+              if(!e.dead && Math.hypot(e.x - ox, e.y - oy) < 16 * area + e.radius) {
+                damageEnemy(e, (o.evolved ? 42 : 15 + o.level * 5) * dmgBonus, o.evolved ? '#facc15' : '#818cf8');
+              }
+            });
+          }
+        }
+      }
+
+      // 3. 幻影飛刀 (Daggers)
+      const d = WEAPONS.daggers;
+      if (d.level > 0) {
+        d.timer += dt;
+        if (d.timer >= (d.evolved ? 0.20 : Math.max(0.25, 1.0 - d.level * 0.14)) * cdBonus) {
+          d.timer = 0; player.attackPulse = 0.18;
+          const a = Math.atan2(player.facingY || 0, player.facingX || 1);
+          const cnt = (d.evolved ? 12 : 1 + d.level) + extra;
+          for(let i = 0; i < cnt; i++) {
+            const ang = d.evolved ? (i / 12) * Math.PI * 2 : a + (i - (cnt - 1) / 2) * 0.12;
+            bullets.push({
+              x: player.x, y: player.y,
+              vx: Math.cos(ang) * 12, vy: Math.sin(ang) * 12,
+              radius: (d.evolved ? 6 : 4) * area,
+              color: d.evolved ? '#a855f7' : '#e2e8f0',
+              damage: (d.evolved ? 42 : 18 + d.level * 6) * dmgBonus,
+              pierce: (d.evolved ? 999 : 2 + Math.floor(d.level / 2)) + heroPierce,
+              life: 1.5
+            });
+          }
+        }
+      }
+
+      // 4. 落雷術 (Thunder) - 索爾 bonus
+      const t = WEAPONS.thunder;
+      if (t.level > 0) {
+        t.timer += dt;
+        const stormMult = selectedHeroKey === 'storm' ? 1.3 : 1.0;
+        if (t.timer >= (t.evolved ? 0.50 : Math.max(0.65, 2.0 - t.level * 0.25)) * cdBonus && activeEnemies.length > 0) {
+          t.timer = 0; player.attackPulse = 0.2;
+          const cnt = (t.evolved ? 8 : 1 + Math.floor(t.level / 2)) + extra;
+          [...activeEnemies].sort(() => 0.5 - Math.random()).slice(0, cnt).forEach(e => {
+            damageEnemy(e, (t.evolved ? 140 : 50 + t.level * 22) * dmgBonus * stormMult, '#38bdf8');
+            lightningStrikes.push({ x: e.x, y: e.y, life: 0.18 });
+          });
+        }
+      }
+
+      // 5. 血色荊棘 (Whip)
+      const wW = WEAPONS.whip;
+      if (wW.level > 0) {
+        wW.timer += dt;
+        if (wW.timer >= (wW.evolved ? 0.40 : Math.max(0.50, 1.2 - wW.level * 0.12)) * cdBonus) {
+          wW.timer = 0; player.attackPulse = 0.22;
+          const angle = Math.atan2(player.facingY || 0, player.facingX || 1);
+          enemies.forEach(e => {
+            if (e.dead) return;
+            const dx = e.x - player.x, dy = e.y - player.y;
+            const dist = Math.hypot(dx, dy);
+            const targetAngle = Math.atan2(dy, dx);
+            if (dist < (wW.evolved ? 170 : 120) * area && Math.abs(Math.atan2(Math.sin(targetAngle - angle), Math.cos(targetAngle - angle))) < (wW.evolved ? 1.2 : 0.8)) {
+              damageEnemy(e, (wW.evolved ? 150 : 30 + wW.level * 16) * dmgBonus, '#f87171');
+              if (wW.evolved && Math.random() < 0.25) player.hp = Math.min(player.maxHp, player.hp + 2);
+            }
+          });
+        }
+      }
+
+      // 6. 神聖長弓 (Bow)
+      const b = WEAPONS.bow;
+      if (b.level > 0) {
+        b.timer += dt;
+        if (b.timer >= (b.evolved ? 0.45 : 1.1 - b.level * 0.12) * cdBonus) {
+          b.timer = 0; player.attackPulse = 0.18;
+          const a = Math.atan2(player.facingY || 0, player.facingX || 1);
+          bullets.push({
+            x: player.x, y: player.y,
+            vx: Math.cos(a) * 15, vy: Math.sin(a) * 15,
+            radius: (b.evolved ? 9 : 5) * area,
+            color: '#fde047',
+            damage: (b.evolved ? 120 : 45 + b.level * 18) * dmgBonus,
+            pierce: (b.evolved ? 999 : 2 + b.level) + heroPierce,
+            life: 1.8
+          });
+        }
+      }
+
+      // 7. 劇毒藥劑 (Flask)
+      const f = WEAPONS.flask;
+      if (f.level > 0) {
+        f.timer += dt;
+        if (f.timer >= (f.evolved ? 0.9 : Math.max(1.2, 2.2 - f.level * 0.2)) * cdBonus && activeEnemies.length > 0) {
+          f.timer = 0;
+          const target = activeEnemies[0];
+          groundZones.push({
+            x: target.x, y: target.y,
+            radius: (f.evolved ? 120 : 75) * area,
+            type: 'poison',
+            damage: (f.evolved ? 28 : 12 + f.level * 7) * dmgBonus,
+            life: 5, color: 'rgba(34,197,94,0.3)'
+          });
+        }
+      }
+
+      // 8. 烈焰之環 (Firering) - 艾格尼斯 bonus
+      const fr = WEAPONS.firering;
+      if (fr.level > 0) {
+        fr.timer += dt;
+        const ignisMult = selectedHeroKey === 'ignis' ? 1.25 : 1.0;
+        if (fr.timer >= (fr.evolved ? 0.95 : 2.2 - fr.level * 0.2) * cdBonus) {
+          fr.timer = 0;
+          const rng = (fr.evolved ? 240 : 130) * area;
+          enemies.forEach(e => {
+            if(!e.dead && Math.hypot(e.x - player.x, e.y - player.y) < rng) {
+              damageEnemy(e, (fr.evolved ? 95 : 30 + fr.level * 12) * dmgBonus * ignisMult, '#f97316');
+            }
+          });
+        }
+      }
+
+      // 9. 極寒霜星 (Frost)
+      const frst = WEAPONS.frost;
+      if (frst.level > 0) {
+        frst.timer += dt;
+        if (frst.timer >= (frst.evolved ? 0.9 : Math.max(1.2, 2.0 - frst.level * 0.15)) * cdBonus) {
+          frst.timer = 0;
+          const radius = (frst.evolved ? 160 : 95) * area;
+          enemies.forEach(e => {
+            if (!e.dead && Math.hypot(e.x - player.x, e.y - player.y) < radius) {
+              damageEnemy(e, (frst.evolved ? 88 : 18 + frst.level * 10) * dmgBonus, '#67e8f9');
+              e.slowTimer = Math.max(e.slowTimer || 0, frst.evolved ? 2.5 : 1.5);
+            }
+          });
+        }
+      }
+
+      // 10. 離子射線 (Laser)
+      const l = WEAPONS.laser;
+      if (l.level > 0) {
+        l.timer += dt;
+        if (l.timer >= (l.evolved ? 0.18 : Math.max(0.35, 0.9 - l.level * 0.08)) * cdBonus && activeEnemies.length > 0) {
+          l.timer = 0; player.attackPulse = 0.16;
+          const target = activeEnemies[0];
+          const ang = Math.atan2(target.y - player.y, target.x - player.x);
+          playSound('laser');
+          bullets.push({
+            x: player.x, y: player.y,
+            vx: Math.cos(ang) * 18, vy: Math.sin(ang) * 18,
+            radius: (l.evolved ? 9 : 6) * area,
+            color: '#38bdf8',
+            damage: (l.evolved ? 150 : 35 + l.level * 15) * dmgBonus,
+            pierce: (l.evolved ? 9 : 4) + heroPierce,
+            life: 1.5
+          });
+        }
+      }
+
+      // 11. 聖芒長矛 (Spear)
+      const sp = WEAPONS.spear;
+      if (sp.level > 0) {
+        sp.timer += dt;
+        if (sp.timer >= (sp.evolved ? 0.5 : Math.max(0.8, 1.7 - sp.level * 0.12)) * cdBonus) {
+          sp.timer = 0; player.attackPulse = 0.2;
+          const angles = sp.evolved ? [0, 0.78, 1.57, 2.35, 3.14, 3.92, 4.71, 5.49] : [-0.8, -0.3, 0.3, 0.8];
+          angles.forEach(a => {
+            bullets.push({
+              x: player.x, y: player.y,
+              vx: Math.cos(a) * 12, vy: Math.sin(a) * 12,
+              radius: (sp.evolved ? 9 : 5.5) * area,
+              color: '#facc15',
+              damage: (sp.evolved ? 130 : 28 + sp.level * 12) * dmgBonus,
+              pierce: (sp.evolved ? 6 : 2) + heroPierce,
+              life: 1.4
+            });
+          });
+        }
+      }
+
+      // 12. 幽冥厲鬼 (Skull)
+      const sk = WEAPONS.skull;
+      if (sk.level > 0) {
+        sk.timer += dt;
+        if (sk.timer >= (sk.evolved ? 0.85 : Math.max(1.2, 2.2 - sk.level * 0.16)) * cdBonus && activeEnemies.length > 0) {
+          sk.timer = 0; player.attackPulse = 0.16;
+          const target = activeEnemies[Math.floor(Math.random() * activeEnemies.length)];
+          const dist = Math.max(1, Math.hypot(target.x - player.x, target.y - player.y));
+          bullets.push({
+            x: player.x, y: player.y,
+            vx: ((target.x - player.x) / dist) * 10, vy: ((target.y - player.y) / dist) * 10,
+            radius: (sk.evolved ? 10 : 6) * area,
+            color: '#c084fc',
+            damage: (sk.evolved ? 110 : 24 + sk.level * 14) * dmgBonus,
+            pierce: 2 + heroPierce,
+            life: 1.8, type: 'skull'
+          });
+        }
+      }
+    }
+
+    function update(dt) {
+      if (gameState !== 'PLAYING') return;
+
+      let mx = 0, my = 0;
+      if (joystick.active) { mx = joystick.dx; my = joystick.dy; } 
+      else {
+        if (keys.w) my -= 1; if (keys.s) my += 1;
+        if (keys.a) mx -= 1; if (keys.d) mx += 1;
+        if (mx !== 0 && my !== 0) { mx *= Math.SQRT1_2; my *= Math.SQRT1_2; }
+      }
+      if (mx !== 0 || my !== 0) { player.facingX = mx; player.facingY = my; }
+      
+      const curSpd = player.speed * (1 + PASSIVES.boots.level * 0.15);
+      player.x += mx * curSpd * 60 * dt; player.y += my * curSpd * 60 * dt;
+      camera.x = player.x - window.innerWidth / 2; camera.y = player.y - window.innerHeight / 2;
+      if (player.invulnerableTimer > 0) player.invulnerableTimer -= dt;
+      if (player.attackPulse > 0) player.attackPulse = Math.max(0, player.attackPulse - dt);
+      if (PASSIVES.heart.level > 0) player.hp = Math.min(player.maxHp, player.hp + PASSIVES.heart.level * 1.5 * dt);
+
+      // Multiplayer peers interpolation
+      if (isMultiplayer) {
+        Object.keys(peers).forEach(id => {
+          const p = peers[id];
+          if (p.targetX !== undefined && p.targetY !== undefined) {
+            const dx = p.targetX - p.currentX, dy = p.targetY - p.currentY;
+            if (Math.hypot(dx, dy) > 150) {
+              p.currentX = p.targetX; p.currentY = p.targetY;
+            } else {
+              p.currentX += dx * 0.2;
+              p.currentY += dy * 0.2;
+            }
+          }
+        });
+        syncTimer += dt;
+        if (syncTimer >= 0.05) {
+          syncPlayerPosition(player.x, player.y, player.hp, player.facingX, player.level, player.maxHp, player.attackPulse);
+          syncTimer = 0;
+        }
+      }
+
+      // Magnet & item pickup (Rogue hero bonus +30% magnet)
+      const rogueMagnet = selectedHeroKey === 'rogue' ? 1.3 : 1.0;
+      const mag = 100 * (1 + PASSIVES.magnet.level * 0.35) * (1 + Talents.magnet.level * Talents.magnet.value) * rogueMagnet;
+      for (let i = gems.length - 1; i >= 0; i--) {
+        const g = gems[i], d = Math.hypot(player.x - g.x, player.y - g.y);
+        if (d < mag) {
+          const a = Math.atan2(player.y - g.y, player.x - g.x);
+          g.x += Math.cos(a) * 11 * 60 * dt;
+          g.y += Math.sin(a) * 11 * 60 * dt;
+        }
+        if (d < 22) {
+          if (g.type === 'coin') {
+            const added = g.val;
+            sessionGold += added;
+            playSound('coin');
+            updateGoldUI(sessionGold);
+          } else {
+            addExp(g.val * (1 + PASSIVES.crown.level * 0.15) * (1 + Talents.exp.level * Talents.exp.value));
+          }
+          if (isMultiplayer) {
+            sharedDrops = sharedDrops.filter(drop => drop.id !== g.id);
+            syncPartyRoomState(true);
+          }
+          gems.splice(i, 1);
+        }
+      }
+
+      updateWeapons(dt);
+
+      // Bullets
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i]; b.x += b.vx * 60 * dt; b.y += b.vy * 60 * dt; b.life -= dt;
+        let hit = false;
+        for (let j = enemies.length - 1; j >= 0; j--) {
+          const e = enemies[j];
+          if (!e.dead && Math.hypot(b.x - e.x, b.y - e.y) < b.radius + e.radius) {
+            damageEnemy(e, b.damage, b.color);
+            b.pierce--;
+            if (b.pierce <= 0) { hit = true; break; }
+          }
+        }
+        if (hit || b.life <= 0) bullets.splice(i, 1);
+      }
+
+      // Host spawns & runs enemies
+      if (!isMultiplayer || isRoomHost) {
+        enemySpawnCounter += dt;
+        if (enemySpawnCounter >= Math.max(0.12, 0.8 - currentWave * 0.008) && enemies.length < 150) {
+          spawnEnemy();
+          enemySpawnCounter = 0;
+        }
+
+        if (isMultiplayer) {
+          enemySyncTimer += dt;
+          if (enemySyncTimer >= 0.2) {
+            syncPartyRoomState(true);
+            enemySyncTimer = 0;
+          }
+        }
+      }
+
+      // Poison zones
+      for (let i = groundZones.length - 1; i >= 0; i--) {
+        const z = groundZones[i];
+        z.life -= dt;
+        if (z.life <= 0) { groundZones.splice(i, 1); continue; }
+        enemies.forEach(e => {
+          if (!e.dead && Math.hypot(e.x - z.x, e.y - z.y) < z.radius) {
+            e.poisonTimer = Math.max(e.poisonTimer || 0, 3);
+            e.poisonDamage = z.damage;
+          }
+        });
+      }
+
+      // Enemies movement & collision
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        if (e.dead) { enemies.splice(i, 1); continue; }
+
+        if (e.slowTimer > 0) e.slowTimer -= dt;
+        if (e.poisonTimer > 0) {
+          e.poisonTimer -= dt;
+          damageEnemy(e, (e.poisonDamage || 10) * dt, '#22c55e');
+        }
+
+        // Host AI targeting closest player
+        if (!isMultiplayer || isRoomHost) {
+          let targetX = player.x, targetY = player.y;
+          let minDist = Math.hypot(player.x - e.x, player.y - e.y);
+          if (isMultiplayer) {
+            Object.values(peers).forEach(p => {
+              const pDist = Math.hypot(p.currentX - e.x, p.currentY - e.y);
+              if (pDist < minDist) { minDist = pDist; targetX = p.currentX; targetY = p.currentY; }
+            });
+          }
+
+          const dist = Math.hypot(targetX - e.x, targetY - e.y);
+          const a = Math.atan2(targetY - e.y, targetX - e.x);
+          const currentSpd = e.speed * (e.slowTimer > 0 ? 0.65 : 1.0);
+
+          if (e.type === 'archer') {
+            if (dist > 220) { e.x += Math.cos(a) * currentSpd * 60 * dt; e.y += Math.sin(a) * currentSpd * 60 * dt; }
+            else if (dist < 140) { e.x -= Math.cos(a) * currentSpd * 60 * dt; e.y -= Math.sin(a) * currentSpd * 60 * dt; }
+            e.shootTimer += dt;
+            if(e.shootTimer > 2.2) {
+              e.shootTimer = 0;
+              enemyProjectiles.push({ x: e.x, y: e.y, vx: Math.cos(a) * 4.5, vy: Math.sin(a) * 4.5, radius: 5, color: '#ef4444', damage: 14, life: 3.5 });
+            }
+          } else if (e.type === 'imp') {
+            e.x += Math.cos(a) * currentSpd * 60 * dt; e.y += Math.sin(a) * currentSpd * 60 * dt;
+            if (dist < 35) {
+              e.dead = true;
+              if(player.invulnerableTimer <= 0) {
+                const armorDef = PASSIVES.armor.level * 3 + (selectedHeroKey === 'valkyrie' ? 3 : 0);
+                player.hp -= Math.max(1, 28 - armorDef);
+                player.invulnerableTimer = 0.4;
+                updateHpUI(player.hp, player.maxHp);
+                if (player.hp <= 0) resolvePlayerDefeat();
+              }
+            }
+          } else {
+            e.x += Math.cos(a) * currentSpd * 60 * dt; e.y += Math.sin(a) * currentSpd * 60 * dt;
+          }
+        }
+
+        // Local collision with player
+        const pDist = Math.hypot(player.x - e.x, player.y - e.y);
+        if (pDist < player.size / 2 + e.radius && player.invulnerableTimer <= 0) {
+          const armorDef = PASSIVES.armor.level * 3 + (selectedHeroKey === 'valkyrie' ? 3 : 0);
+          player.hp -= Math.max(1, e.damage - armorDef);
+          player.invulnerableTimer = 0.45;
+          updateHpUI(player.hp, player.maxHp);
+          playSound('hit');
+          if (player.hp <= 0) {
+            if (!resolvePlayerDefeat()) return;
+          }
+        }
+      }
+
+      // Enemy projectiles
+      for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
+        const ep = enemyProjectiles[i]; ep.x += ep.vx * 60 * dt; ep.y += ep.vy * 60 * dt; ep.life -= dt;
+        if (Math.hypot(ep.x - player.x, ep.y - player.y) < ep.radius + player.size / 2 && player.invulnerableTimer <= 0) {
+          const armorDef = PASSIVES.armor.level * 3 + (selectedHeroKey === 'valkyrie' ? 3 : 0);
+          player.hp -= Math.max(1, ep.damage - armorDef);
+          player.invulnerableTimer = 0.4;
+          updateHpUI(player.hp, player.maxHp);
+          enemyProjectiles.splice(i, 1);
+          if (player.hp <= 0 && !resolvePlayerDefeat()) return;
+          continue;
+        }
+        if (ep.life <= 0) enemyProjectiles.splice(i, 1);
+      }
+
+      // FX
+      for (let i = floatingTexts.length - 1; i >= 0; i--) { floatingTexts[i].y += floatingTexts[i].vy * 60 * dt; floatingTexts[i].life -= dt; if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); }
+      for (let i = lightningStrikes.length - 1; i >= 0; i--) { lightningStrikes[i].life -= dt; if (lightningStrikes[i].life <= 0) lightningStrikes.splice(i, 1); }
+
+      waveTimer -= dt;
+      if (waveTimer <= 0) {
+        currentWave++;
+        waveTimer = 40;
+        if (currentWave > highestWave) highestWave = currentWave;
+        saveGameProgress();
+        playSound('levelup');
+      }
+      updateHUD(waveTimer, currentWave, 100, killCount);
+    }
+
+    function drawMap(ctx, cam, w, h, mapCfg) {
+      const tileSize = 60;
+      const startTileX = Math.floor(cam.x / tileSize);
+      const endTileX = Math.ceil((cam.x + w) / tileSize);
+      const startTileY = Math.floor(cam.y / tileSize);
+      const endTileY = Math.ceil((cam.y + h) / tileSize);
+
+      ctx.fillStyle = mapCfg.baseColor;
+      ctx.fillRect(0, 0, w, h);
+
+      for (let tx = startTileX; tx <= endTileX; tx++) {
+        for (let ty = startTileY; ty <= endTileY; ty++) {
+          const posX = tx * tileSize;
+          const posY = ty * tileSize;
+          const hash = Math.sin(tx * 12.9898 + ty * 78.233) * 43758.5453;
+          const rand = hash - Math.floor(hash);
+
+          ctx.fillStyle = rand > 0.55 ? mapCfg.tileColor1 : mapCfg.tileColor2;
+          ctx.fillRect(posX, posY, tileSize, tileSize);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = `rgba(0, 0, 0, ${mapCfg.borderAlpha * 3})`;
+          ctx.strokeRect(posX, posY, tileSize, tileSize);
+        }
+      }
+    }
+
+    function drawMinimap() {
+      const canvas = document.getElementById('minimapCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      const range = 260;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = 'rgba(11, 17, 32, 0.92)';
+      ctx.fillRect(0, 0, w, h);
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, Math.min(w, h) / 2 - 3, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const toMini = (x, y) => ({
+        x: ((x - (player.x - range)) / (range * 2)) * (w - 12) + 6,
+        y: ((y - (player.y - range)) / (range * 2)) * (h - 12) + 6
+      });
+
+      enemies.forEach(e => {
+        if (e.dead) return;
+        if (Math.abs(e.x - player.x) <= range && Math.abs(e.y - player.y) <= range) {
+          const p = toMini(e.x, e.y);
+          ctx.beginPath(); ctx.arc(p.x, p.y, e.isBoss ? 4.5 : 2.2, 0, Math.PI * 2);
+          ctx.fillStyle = e.isBoss ? '#facc15' : '#ef4444'; ctx.fill();
+        }
+      });
+
+      const pPos = toMini(player.x, player.y);
+      ctx.beginPath(); ctx.arc(pPos.x, pPos.y, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#22c55e'; ctx.fill();
+    }
+
+    function draw() {
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      if (gameState !== 'PLAYING') return;
+
+      ctx.save(); ctx.translate(-camera.x, -camera.y);
+      drawMap(ctx, camera, canvas.width, canvas.height, MAPS[selectedMapKey] || MAPS.dungeon);
+
+      // Ground poison zones
+      groundZones.forEach(z => {
+        ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
+        ctx.fillStyle = z.color; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(74,222,128,0.7)'; ctx.stroke();
+      });
+
+      // Gems & Coins
+      gems.forEach(g => {
+        ctx.beginPath(); ctx.arc(g.x, g.y, g.type === 'coin' ? 4.5 : 4, 0, Math.PI * 2);
+        ctx.fillStyle = g.type === 'coin' ? '#facc15' : '#38bdf8'; ctx.fill();
+      });
+
+      // Peers
+      if (isMultiplayer) {
+        const now = Date.now();
+        Object.keys(peers).forEach(pid => {
+          const p = peers[pid];
+          if (now - p.lastSeen < 4000 && p.currentX !== undefined) {
+            ctx.save(); ctx.translate(p.currentX, p.currentY);
+            if (p.facingX < 0) ctx.scale(-1, 1);
+            const spr = SpriteCanvasCache[`hero_${p.heroKey}`] || SpriteCanvasCache.peerPlayer;
+            if (spr) ctx.drawImage(spr, -spr.width / 2, -spr.height / 2);
+            ctx.scale(p.facingX < 0 ? -1 : 1, 1);
+            ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#10b981'; ctx.textAlign = 'center';
+            ctx.fillText(p.name.split(' ')[0], 0, -22);
+            ctx.restore();
+          }
+        });
+      }
+
+      // Enemies
+      enemies.forEach(e => {
+        ctx.save(); ctx.translate(e.x, e.y);
+        const spr = e.isBoss ? SpriteCanvasCache.boss : (SpriteCanvasCache[e.type] || SpriteCanvasCache.bat);
+        if(spr) ctx.drawImage(spr, -spr.width/2, -spr.height/2);
+        if (e.slowTimer > 0) {
+          ctx.beginPath(); ctx.arc(0, 0, e.radius + 6, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(103,232,249,0.7)'; ctx.lineWidth = 2; ctx.stroke();
+        }
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(-e.radius, -e.radius-8, e.radius*2, 4);
+        ctx.fillStyle = e.isBoss ? '#facc15' : '#ef4444';
+        ctx.fillRect(-e.radius, -e.radius-8, (e.hp/e.maxHp)*e.radius*2, 4);
+        ctx.restore();
+      });
+
+      // Player
+      ctx.save(); ctx.translate(player.x, player.y);
+      if(player.invulnerableTimer > 0 && Math.floor(Date.now()/80)%2===0) ctx.globalAlpha = 0.4;
+      if (player.facingX < 0) ctx.scale(-1, 1);
+      const hSpr = SpriteCanvasCache[`hero_${selectedHeroKey}`];
+      if(hSpr) ctx.drawImage(hSpr, -hSpr.width/2, -hSpr.height/2);
+
+      // Orbs visual
+      const o = WEAPONS.orbs;
+      if (o.level > 0) {
+        ctx.scale(player.facingX < 0 ? -1 : 1, 1);
+        const cnt = (o.evolved ? 6 : 2 + o.level) + PASSIVES.duplicator.level;
+        const rad = (o.evolved ? 110 : 75) * (1 + PASSIVES.candle.level * 0.25);
+        for(let i=0; i<cnt; i++) {
+          ctx.beginPath();
+          ctx.arc(Math.cos(player.orbAngle + i*(Math.PI*2/cnt))*rad, Math.sin(player.orbAngle + i*(Math.PI*2/cnt))*rad, o.evolved?10:7, 0, Math.PI*2);
+          ctx.fillStyle = o.evolved?'#facc15':'#818cf8'; ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      // Bullets
+      bullets.forEach(b => {
+        ctx.save();
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fillStyle = b.color; ctx.fill();
+        ctx.restore();
+      });
+
+      // Enemy Projectiles
+      enemyProjectiles.forEach(ep => {
+        ctx.beginPath(); ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI * 2);
+        ctx.fillStyle = ep.color; ctx.fill();
+      });
+
+      // Lightning strikes
+      lightningStrikes.forEach(l => {
+        ctx.save();
+        ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(l.x, l.y - 200); ctx.lineTo(l.x - 12, l.y - 100); ctx.lineTo(l.x + 8, l.y - 50); ctx.lineTo(l.x, l.y);
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // Floating damage texts
+      floatingTexts.forEach(ft => {
+        ctx.font = `bold ${ft.size||14}px 'Courier New'`;
+        ctx.textAlign = 'center'; ctx.fillStyle = ft.color;
+        ctx.fillText(ft.text, ft.x, ft.y);
+      });
+
+      ctx.restore();
+      drawMinimap();
+    }
+
+    function bindUIEvents() {
+      document.getElementById('btnGoogleLogin').onclick = () => {
+        if (location.protocol === 'file:') {
+          showToast('雲端存檔需於本機伺服器 (http://localhost) 或線上主機運作。');
+          return;
+        }
+        signInWithPopup(auth, new GoogleAuthProvider()).then(res => {
+          currentUser = res.user;
+          myName = currentUser.displayName || myName;
+          myPeerId = currentUser.uid;
+          document.getElementById('loginText').innerText = `已登入: ${myName}`;
+          showToast(`登入成功，歡迎 ${myName}！`);
+        }).catch(err => {
+          console.error(err);
+          showToast('Google 登入失敗或已取消');
+        });
+      };
+
+      document.getElementById('btnMenuPlay').onclick = () => { isMultiplayer = false; initAudio(); startGame(); };
+
+      document.getElementById('btnMenuChar').onclick = () => {
+        previewHeroKey = selectedHeroKey;
+        updateHeroStage(previewHeroKey);
+        renderCharSelectUI();
+        showScreen('charSelectScreen');
+      };
+      document.getElementById('btnConfirmHero').onclick = () => {
+        if (HEROES[previewHeroKey].unlocked) {
+          selectedHeroKey = previewHeroKey;
+          playSound('coin');
+          saveGameProgress();
+          showScreen('mainMenuScreen');
+        }
+      };
+      document.getElementById('btnBackFromChar').onclick = () => showScreen('mainMenuScreen');
+
+      document.getElementById('btnMenuMap').onclick = () => {
+        renderMapSelectUI();
+        showScreen('mapSelectScreen');
+      };
+      document.getElementById('btnBackFromMap').onclick = () => showScreen('mainMenuScreen');
+
+      document.getElementById('btnMenuTalent').onclick = () => {
+        renderTalentsUI();
+        updateGoldUI(sessionGold);
+        showScreen('talentModal');
+      };
+      document.getElementById('closeTalentBtn').onclick = () => showScreen('mainMenuScreen');
+
+      document.getElementById('btnMenuAchievements').onclick = () => {
+        renderAchievementsUI();
+        showScreen('achievementModal');
+      };
+      document.getElementById('closeAchievementBtn').onclick = () => showScreen('mainMenuScreen');
+
+      document.getElementById('btnMenuMulti').onclick = () => showScreen('multiMatchScreen');
+      document.getElementById('btnBackFromMatch').onclick = () => showScreen('mainMenuScreen');
+      document.getElementById('btnHostCreateRoom').onclick = () => joinLobby(Math.random().toString(36).substring(2, 8).toUpperCase(), true);
+      document.getElementById('btnGuestJoinRoom').onclick = () => joinLobby(document.getElementById('joinRoomCodeInput').value.trim().toUpperCase(), false);
+      
+      document.getElementById('btnGuestToggleReady').onclick = () => { 
+        isMyReady = !isMyReady; 
+        syncLobbyState(isMyReady, selectedHeroKey); 
+        showLobbyUI();
+      };
+      document.getElementById('btnHostStartGame').onclick = () => { 
+        if (isRoomHost) { 
+          setRoomPlayingStatus(true, selectedMapKey);
+          isMultiplayer = true;
+          startGame(); 
+        } 
+      };
+      document.getElementById('btnLeaveLobby').onclick = () => {
+        isLeavingRoom = true;
+        isMultiplayer = false; isRoomHost = false; isMyReady = false; currentRoomCode = '';
+        peers = {}; lobbyPlayers = {};
+        leaveRemoteRoom();
+        showScreen('mainMenuScreen');
+      };
+
+      const audioToggleBtn = document.getElementById('audioToggleBtn');
+      audioToggleBtn.onclick = () => {
+        const isEnabled = toggleAudio();
+        audioToggleBtn.innerHTML = isEnabled ? '<i class="pixel-icon" data-icon="ui_audio"></i>' : '🔇';
+        renderAllPixelIcons();
+      };
+
+      const pauseBtn = document.getElementById('pauseBtn');
+      pauseBtn.onclick = () => {
+        if (gameState === 'PLAYING') {
+          gameState = 'PAUSED';
+          pauseBtn.innerHTML = '▶️';
+        } else if (gameState === 'PAUSED') {
+          gameState = 'PLAYING';
+          pauseBtn.innerHTML = `<i class="pixel-icon" data-icon="ui_pause"></i>`;
+          lastTime = performance.now();
+          renderAllPixelIcons();
+        }
+      };
+
+      document.getElementById('restartBtn').onclick = () => { showScreen(null); startGame(); };
+      document.getElementById('endBackMenuBtn').onclick = () => {
+        isLeavingRoom = true;
+        document.getElementById('hud').style.display = 'none';
+        document.getElementById('minimapWrapper').style.display = 'none';
+        if (isMultiplayer || currentRoomCode) {
+          isMultiplayer = false; isRoomHost = false; isMyReady = false; currentRoomCode = '';
+          peers = {}; lobbyPlayers = {};
+          leaveRemoteRoom();
+        }
+        showScreen('mainMenuScreen');
+        gameState = 'MENU';
+      };
+    }
+
+    function resizeCanvas() {
+      const cvs = document.getElementById('gameCanvas');
+      if (cvs) {
+        cvs.width = window.innerWidth;
+        cvs.height = window.innerHeight;
+      }
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function gameLoop(now) {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+      if (gameState === 'PLAYING') update(dt);
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    window.onload = () => {
+      resizeCanvas();
+      initDarkPixelIcons();
+      initSprites();
+      renderAllPixelIcons();
+      bindUIEvents();
+      bindJoystick();
+
+      const raw = localStorage.getItem('RAGNAROK_SAVE');
+      if (raw) {
+        try { applyCloudData(JSON.parse(raw)); } catch(e){}
+      }
+
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          currentUser = user;
+          myName = user.displayName || myName;
+          myPeerId = user.uid;
+          document.getElementById('loginText').innerText = `已登入: ${myName}`;
+          try {
+            const snap = await getDoc(doc(db, "users", user.uid));
+            if (snap.exists()) applyCloudData(snap.data());
+          } catch(e){}
+        }
+      });
+
+      lastTime = performance.now();
+      requestAnimationFrame(gameLoop);
+    };
+  </script>
+</body>
+</html>
