@@ -23,7 +23,7 @@
     #minimapWrapper { position: absolute; top: 55px; right: 12px; width: 85px; height: 85px; background: rgba(10, 15, 26, 0.85); border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 50%; overflow: visible; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.9); z-index: 42; display: none; pointer-events: none; }
     #minimapCanvas { width: 100%; height: 100%; display: block; border-radius: 50%; overflow: hidden; }
     .party-revive-badge { position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); background: rgba(15, 23, 42, 0.9); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.6); border-radius: 999px; font-size: 10px; padding: 3px 8px; white-space: nowrap; z-index: 43; }
-    #eventBanner { display: none; background: linear-gradient(90deg, rgba(185, 28, 28, 0.9), rgba(127, 29, 29, 0.9)); color: #fff; text-align: center; font-size: 11px; font-weight: 900; padding: 3px 10px; border-radius: 4px; border: 1px solid #ef4444; animation: pulseEvent 1s infinite alternate; align-self: center; }
+    #eventBanner { display: none; background: linear-gradient(90deg, rgba(185, 28, 28, 0.95), rgba(127, 29, 29, 0.95)); color: #fff; text-align: center; font-size: 12px; font-weight: 900; padding: 5px 14px; border-radius: 6px; border: 1px solid #f87171; box-shadow: 0 0 12px rgba(239, 68, 68, 0.6); animation: pulseEvent 1s infinite alternate; align-self: center; }
     @keyframes pulseEvent { from { transform: scale(0.98); opacity: 0.9; } to { transform: scale(1.02); opacity: 1; } }
     
     #equipmentHud { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
@@ -200,7 +200,7 @@
       <div class="hero-carousel" id="heroCarouselContainer"></div>
       <div style="display:flex; gap:8px; width:100%;">
         <button class="action-btn emerald" id="btnConfirmHero" style="flex:1;">✅ 選擇出戰</button>
-        <button class="action-btn secondary" id="btnBackFromChar" style="flex:1;">返回主選單</button>
+        <button class="action-btn secondary" id="btnBackFromChar">返回主選單</button>
       </div>
     </div>
   </div>
@@ -230,7 +230,6 @@
     </div>
   </div>
 
-  <!-- 升級選單：無 30 秒等待限制，即選即升級 -->
   <div class="modal-overlay" id="upgradeModal">
     <div class="panel-card">
       <div class="panel-title" id="upgradeTitle">⚡ 等級突破！</div>
@@ -302,7 +301,7 @@
       thunder: { id: 'thunder', name: '落雷術', iconKey: 'thunder', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '召喚天雷猛烈轟炸隨機敵人', evolvesInto: 'storm_judgement', requiredPassive: 'duplicator' },
       whip: { id: 'whip', name: '血色荊棘', iconKey: 'whip', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '橫向揮擊血鞭，撕裂前方敵人', evolvesInto: 'blood_tear', requiredPassive: 'heart' },
       bow: { id: 'bow', name: '神聖長弓', iconKey: 'bow', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '蓄力朝前方射出強大貫穿光箭', evolvesInto: 'celestial_arrow', requiredPassive: 'clover' },
-      flask: { id: 'flask', name: '劇毒藥劑', iconKey: 'flask', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '向地面投擲毒瓶，產生持續腐蝕毒池', evolvesInto: 'toxic_plague', requiredPassive: 'candle' },
+      flask: { id: 'flask', name: '劇毒藥劑', iconKey: 'flask', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '向地面投擲毒瓶，產生持續腐蝕毒霧', evolvesInto: 'toxic_plague', requiredPassive: 'candle' },
       firering: { id: 'firering', name: '烈焰之環', iconKey: 'firering', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '週期性釋放全方位火焰衝擊波', evolvesInto: 'hellfire_nova', requiredPassive: 'crown' },
       frost: { id: 'frost', name: '極寒霜星', iconKey: 'frost', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '向四周發射冰晶碎片，大幅緩速敵人', evolvesInto: 'absolute_zero', requiredPassive: 'armor' },
       laser: { id: 'laser', name: '離子射線', iconKey: 'laser', level: 0, maxLevel: 5, timer: 0, evolved: false, desc: '朝最近敵人持續掃射高能貫穿雷射', evolvesInto: 'hyper_beam', requiredPassive: 'greed_pass' },
@@ -436,6 +435,7 @@
       SpriteCanvasCache.lich = createPixelSprite([".BBBB.", "BWWWWB", "BWBWB.", ".WWW.", ".B.B.", "..B.."], { 'B': '#67e8f9', 'W': '#e2e8f0' }, 3);
       SpriteCanvasCache.ghost = createPixelSprite([".GGG.", "GWWWG", "GWWWG", ".WGW.", ".W.W.", "..G.."], { 'G': '#cbd5e1' }, 3);
       SpriteCanvasCache.gargoyle = createPixelSprite([".RRR.", "RWWWR", "RWGWR", ".WWW.", ".G.G.", "..R.."], { 'R': '#9ca3af', 'W': '#f8fafc', 'G': '#94a3b8' }, 3);
+      SpriteCanvasCache.elite = createPixelSprite(["..YY..", ".YRRRY.", "YRWGWRY", "YRWGWRY", ".YRRRY.", "R.RRR.R", "..R.R.."], { 'Y': '#facc15', 'R': '#a855f7', 'W': '#fdf4ff', 'G': '#ec4899' }, 4);
       SpriteCanvasCache.boss = createPixelSprite(["..YYYY..", ".YRRRRY.", "YRWGGWRY", "YRWGGWRY", ".YRRRRY.", "RRRKKRRR", "R.RKKR.R", "..R..R.."], { 'Y': '#f59e0b', 'R': '#991b1b', 'W': '#fee2e2', 'G': '#ef4444', 'K': '#450a0a' }, 5);
       SpriteCanvasCache.peerPlayer = createPixelSprite(heroMatrix, { 'H': '#047857', 'F': '#10b981', 'S': '#fde047', 'W': '#ffffff', 'A': '#6ee7b7', 'B': '#059669', 'L': '#064e3b' }, 3);
     }
@@ -484,12 +484,13 @@
         gain.gain.setValueAtTime(vol, now); gain.gain.linearRampToValueAtTime(0, now + dur);
         osc.start(now); osc.stop(now + dur);
       };
-      if (type === 'hit') createTone('triangle', 160, 30, 0.05, 0.05);
+      if (type === 'hit') createTone('triangle', 160, 30, 0.05, 0.04);
       if (type === 'coin') createTone('sine', 987, 1318, 0.12, 0.06);
       if (type === 'gem') createTone('sine', 850 + Math.random() * 150, 1300, 0.05, 0.03);
       if (type === 'levelup') createTone('square', 440, 880, 0.18, 0.08);
       if (type === 'explosion') createTone('sawtooth', 120, 20, 0.25, 0.08);
       if (type === 'laser') createTone('sine', 1800, 300, 0.08, 0.04);
+      if (type === 'poison') createTone('sawtooth', 220, 110, 0.12, 0.03);
     }
 
     function toggleAudio() {
@@ -522,6 +523,10 @@
     let enemySpawnCounter = 0, hasEvolvedAny = false;
     let selectedHeroKey = 'knight', previewHeroKey = 'knight', selectedMapKey = 'dungeon';
 
+    // 特殊事件系統
+    let activeEvent = null; // { type: 'swarm'|'altar'|'miniboss', timer: 0, maxTimer: 0, altar: {...} }
+    let eventCooldownTimer = 18; // 開局 18 秒後啟動第一個特殊事件
+
     let isMultiplayer = false, isRoomHost = false, isMyReady = false, currentRoomCode = '';
     let isLeavingRoom = false;
     let lobbyPlayers = {}, peers = {}, syncTimer = 0, enemySyncTimer = 0;
@@ -530,7 +535,6 @@
     let myPeerId = 'hero_' + Math.random().toString(36).substring(2, 6);
     let myName = '勇者#' + myPeerId.substring(5);
 
-    // 戰鬥命中與技能彈幕同步緩衝
     let myPendingHits = [];
     let myPendingAttacks = [];
     const processedHitIds = new Set();
@@ -658,6 +662,20 @@
       if (timeDisplay) timeDisplay.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       if (waveDisplay) waveDisplay.innerText = `第 ${wave} / ${maxWaves} 波`;
       if (killDisplay) killDisplay.innerHTML = `<i class="pixel-icon" data-icon="ui_skull"></i> ${kills}`;
+
+      const banner = document.getElementById('eventBanner');
+      if (activeEvent) {
+        banner.style.display = 'block';
+        if (activeEvent.type === 'swarm') {
+          banner.innerHTML = `<i class="pixel-icon" data-icon="ui_alert"></i> ⚠️ 特殊事件：魔潮狂暴突襲！剩餘 ${Math.ceil(activeEvent.timer)} 秒`;
+        } else if (activeEvent.type === 'altar') {
+          banner.innerHTML = `<i class="pixel-icon" data-icon="ui_alert"></i> ⚡ 特殊事件：佔領遠古祭壇！進度：${Math.floor(activeEvent.altar.progress)}%`;
+        } else if (activeEvent.type === 'miniboss') {
+          banner.innerHTML = `<i class="pixel-icon" data-icon="ui_alert"></i> 💀 特殊事件：討伐小型精英領主！擊敗獲取巨大經驗！`;
+        }
+      } else {
+        banner.style.display = 'none';
+      }
       renderAllPixelIcons();
     }
 
@@ -894,7 +912,6 @@
       }
     }
 
-    // 接收本地跨分頁訊息
     if (localBroadcast) {
       localBroadcast.onmessage = (e) => {
         const msg = e.data;
@@ -1045,9 +1062,13 @@
           color: '#c084fc', damage: 0, pierce: 1, life: 1.8, isPeerBullet: true, type: 'skull'
         });
       } else if (att.type === 'flask') {
+        // 修復：接收隊友毒池，傷害同步生效！
         groundZones.push({
-          x: att.x, y: att.y, radius: att.radius || 75,
-          type: 'poison', damage: 0, life: 4.5, color: 'rgba(34,197,94,0.3)', isPeerZone: true
+          id: `zone_peer_${Date.now()}_${Math.random()}`,
+          x: att.x, y: att.y, radius: att.radius || 80,
+          type: 'poison', damage: att.damage || 25,
+          tickTimer: 0, life: att.duration || 5.0,
+          color: 'rgba(34,197,94,0.35)', isPeerZone: false
         });
       }
     }
@@ -1069,7 +1090,7 @@
           }
           const initialStatus = {
             isPlaying: false, mapKey: selectedMapKey, revivesRemaining: 1, partyExp: 0, partyGold: 0,
-            drops: [], challengeFailed: false, combatEvents: []
+            drops: [], challengeFailed: false, combatEvents: [], currentEvent: null
           };
           await set(currentRoomRef, { status: initialStatus, players: {} });
         } else if (!roomSnapshot.exists()) {
@@ -1167,7 +1188,17 @@
         partyGold: Number(sharedPartyGold || sessionGold || 0),
         drops: Array.isArray(sharedDrops) ? sharedDrops.slice(-50) : [],
         challengeFailed: sharedChallengeFailed,
-        combatEvents: roomCombatEvents.slice(-20)
+        combatEvents: roomCombatEvents.slice(-20),
+        currentEvent: activeEvent ? {
+          type: activeEvent.type,
+          timer: Math.round(activeEvent.timer),
+          altar: activeEvent.altar ? {
+            x: Math.round(activeEvent.altar.x),
+            y: Math.round(activeEvent.altar.y),
+            progress: Math.round(activeEvent.altar.progress),
+            radius: activeEvent.altar.radius
+          } : null
+        } : null
       };
 
       if (isRoomHost) {
@@ -1176,27 +1207,44 @@
           hp: Math.round(enemy.hp), maxHp: Math.round(enemy.maxHp),
           speed: enemy.speed, radius: enemy.radius, damage: enemy.damage,
           slowTimer: enemy.slowTimer || 0, poisonTimer: enemy.poisonTimer || 0,
-          isBoss: !!enemy.isBoss
+          isBoss: !!enemy.isBoss, isElite: !!enemy.isElite
         }));
         broadcastLocal('ENEMY_SYNC', { enemies: payload.enemies });
       }
       updateRoomStatus(payload);
     }
 
+    // 平滑化遠端敵人同步：採用目標補間插值，徹底告別卡頓跳躍
     function applyRemoteEnemies(remoteEnemies) {
       if (!remoteEnemies) return;
       const existingMap = new Map(enemies.map(e => [e.id, e]));
       const nextList = [];
+
       remoteEnemies.forEach(re => {
         let e = existingMap.get(re.id);
         if (e) {
-          e.x = re.x; e.y = re.y; e.hp = re.hp; e.maxHp = re.maxHp;
-          e.type = re.type; e.radius = re.radius; e.damage = re.damage;
-          e.slowTimer = re.slowTimer || 0; e.poisonTimer = re.poisonTimer || 0;
+          e.targetX = re.x;
+          e.targetY = re.y;
+          // 若本地剛對其造成傷害，暫不被舊封包血量覆蓋
+          if (!e.localHitCooldown || e.localHitCooldown <= 0) {
+            e.hp = re.hp;
+          }
+          e.maxHp = re.maxHp;
+          e.type = re.type;
+          e.radius = re.radius;
+          e.damage = re.damage;
+          e.slowTimer = re.slowTimer || 0;
+          e.poisonTimer = re.poisonTimer || 0;
           e.isBoss = !!re.isBoss;
+          e.isElite = !!re.isElite;
           nextList.push(e);
         } else {
-          nextList.push({ ...re, dead: false });
+          nextList.push({
+            ...re,
+            targetX: re.x,
+            targetY: re.y,
+            dead: false
+          });
         }
       });
       enemies = nextList;
@@ -1236,7 +1284,6 @@
       showScreen('endModal');
     }
 
-    // 升級完成後直接恢復遊戲，不卡頓、不等待 30 秒
     function resumeAfterUpgrade() {
       upgradeSelectionLocked = false;
       if (pendingUpgradeCount > 0) {
@@ -1342,7 +1389,13 @@
           applyRemoteEnemies(status.enemies);
         }
 
-        // 客端同步顯示房主傳來的戰鬥打擊數字與音效
+        // 同步特殊事件狀態
+        if (status && status.currentEvent && !isRoomHost) {
+          activeEvent = status.currentEvent;
+        } else if (status && !status.currentEvent && !isRoomHost) {
+          activeEvent = null;
+        }
+
         if (status && Array.isArray(status.combatEvents) && !isRoomHost) {
           status.combatEvents.forEach(evt => {
             if (evt && evt.t > lastProcessedCombatEventTime) {
@@ -1378,12 +1431,10 @@
               peers[id].lastSeen = now;
             }
 
-            // 房主即時結算遠端隊員的攻擊
             if (isRoomHost && Array.isArray(remote.pendingHits)) {
               remote.pendingHits.forEach(hit => processIncomingHit(hit));
             }
 
-            // 同步隊員施放之彈幕技能動畫
             if (Array.isArray(remote.pendingAttacks)) {
               remote.pendingAttacks.forEach(att => {
                 if (!processedAttackIds.has(att.id)) {
@@ -1423,6 +1474,7 @@
       enemies = []; bullets = []; enemyProjectiles = []; gems = []; particles = []; floatingTexts = []; groundZones = []; lightningStrikes = []; specialVisualEffects = [];
       myPendingHits = []; myPendingAttacks = []; roomCombatEvents = [];
       killCount = 0; currentWave = 1; waveTimer = 40; enemySpawnCounter = 0; pendingUpgradeCount = 0;
+      activeEvent = null; eventCooldownTimer = 18;
 
       const hero = HEROES[selectedHeroKey];
       let hpMult = 1 + Talents.hp.level * Talents.hp.value;
@@ -1464,6 +1516,71 @@
       lastTime = performance.now();
     }
 
+    // 特殊事件觸發函數 (僅房主或單人調度)
+    function triggerSpecialEvent() {
+      const types = ['swarm', 'altar', 'miniboss'];
+      const chosenType = types[Math.floor(Math.random() * types.length)];
+
+      if (chosenType === 'swarm') {
+        activeEvent = { type: 'swarm', timer: 14, maxTimer: 14 };
+        showToast('⚠️ 特殊事件：深淵魔物狂暴浪潮湧現！', 4000);
+        playSound('explosion');
+        // 瞬間生成一圈疾速蝙蝠與惡魔
+        for (let i = 0; i < 22; i++) {
+          const ang = (i / 22) * Math.PI * 2;
+          const dist = 380 + Math.random() * 80;
+          enemies.push({
+            id: `swarm_${Date.now()}_${i}`,
+            x: player.x + Math.cos(ang) * dist,
+            y: player.y + Math.sin(ang) * dist,
+            targetX: player.x + Math.cos(ang) * dist,
+            targetY: player.y + Math.sin(ang) * dist,
+            type: 'bat', hp: 20 * (1 + currentWave * 0.2), maxHp: 20 * (1 + currentWave * 0.2),
+            speed: 3.0, radius: 11, damage: 10 + currentWave,
+            shootTimer: 0, slowTimer: 0, poisonTimer: 0, isSwarm: true
+          });
+        }
+      } else if (chosenType === 'altar') {
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 180 + Math.random() * 100;
+        activeEvent = {
+          type: 'altar',
+          timer: 35,
+          maxTimer: 35,
+          altar: {
+            x: player.x + Math.cos(ang) * dist,
+            y: player.y + Math.sin(ang) * dist,
+            radius: 95,
+            progress: 0
+          }
+        };
+        showToast('⚡ 特殊事件：遠古祭壇顯現！進入光圈佔領它！', 4000);
+        playSound('levelup');
+      } else if (chosenType === 'miniboss') {
+        const ang = Math.random() * Math.PI * 2, dist = 360;
+        const eHp = 360 * (1 + currentWave * 0.4);
+        activeEvent = { type: 'miniboss', timer: 30, maxTimer: 30 };
+        enemies.push({
+          id: `elite_${Date.now()}`,
+          isElite: true,
+          x: player.x + Math.cos(ang) * dist,
+          y: player.y + Math.sin(ang) * dist,
+          targetX: player.x + Math.cos(ang) * dist,
+          targetY: player.y + Math.sin(ang) * dist,
+          type: 'elite',
+          hp: eHp, maxHp: eHp,
+          speed: 1.8,
+          radius: 22,
+          damage: 25 + currentWave * 2,
+          shootTimer: 0, slowTimer: 0, poisonTimer: 0
+        });
+        showToast('💀 特殊事件：遠古精英死靈現身！消滅它獲取大量經驗！', 4000);
+        playSound('explosion');
+      }
+
+      if (isMultiplayer) syncPartyRoomState(true);
+    }
+
     function spawnEnemy() {
       const map = MAPS[selectedMapKey] || MAPS.dungeon;
       const angle = Math.random() * Math.PI * 2, dist = Math.max(window.innerWidth, window.innerHeight) * 0.65 + 50;
@@ -1478,6 +1595,8 @@
           isBoss: true,
           x: player.x + Math.cos(angle)*dist,
           y: player.y + Math.sin(angle)*dist,
+          targetX: player.x + Math.cos(angle)*dist,
+          targetY: player.y + Math.sin(angle)*dist,
           type: 'boss',
           hp: bossHp, maxHp: bossHp,
           speed: 1.1 * map.enemySpeed,
@@ -1504,6 +1623,8 @@
         id: `enemy_${Date.now()}_${Math.random().toString(16).slice(2)}`,
         x: player.x + Math.cos(angle)*dist,
         y: player.y + Math.sin(angle)*dist,
+        targetX: player.x + Math.cos(angle)*dist,
+        targetY: player.y + Math.sin(angle)*dist,
         type, hp, maxHp: hp,
         speed: (speedConfig[type] || 1.5) * map.enemySpeed,
         radius: (type === 'brute' || type === 'lich') ? 18 : 12,
@@ -1512,9 +1633,11 @@
       });
     }
 
+    // 傷害判定與即時回饋
     function damageEnemy(e, dmg, color = '#fff', isLocal = true) {
       if (!e || e.dead) return;
       e.hp -= dmg;
+      e.localHitCooldown = 0.45; // 防止客戶端預測扣血被舊網路封包短暫覆蓋
       floatingTexts.push({ x: e.x, y: e.y - 10, text: Math.round(dmg), color, size: 14, life: 0.6, vy: -1.2 });
       playSound('hit');
 
@@ -1559,16 +1682,27 @@
         }
 
         const goldBonus = (1 + Talents.greed.level * Talents.greed.value) * (1 + PASSIVES.greed_pass.level * 0.3);
-        const expBase = e.isBoss ? 20 : ((e.type === 'brute' || e.type === 'lich') ? 4 : 1);
+        const expBase = e.isBoss ? 25 : (e.isElite ? 16 : ((e.type === 'brute' || e.type === 'lich') ? 4 : 1));
         const expValue = Math.max(1, Math.round(expBase * (1 + currentWave * 0.12)));
-        const drop = (Math.random() < 0.22 || e.isBoss) 
-          ? { x: e.x + 8, y: e.y, type: 'coin', val: Math.round((e.isBoss ? 30 : 5) * goldBonus), id: `${Date.now()}-${Math.random()}` }
-          : { x: e.x, y: e.y, type: 'gem', val: expValue, id: `${Date.now()}-${Math.random()}` };
 
-        gems.push(drop);
-        if (isMultiplayer) {
-          sharedDrops.push(drop);
-          syncPartyRoomState(true);
+        // 精英怪與BOSS爆發更多結晶
+        if (e.isElite) {
+          for (let k = 0; k < 6; k++) {
+            gems.push({ x: e.x + (Math.random() - 0.5) * 40, y: e.y + (Math.random() - 0.5) * 40, type: 'gem', val: 5, id: `${Date.now()}-${Math.random()}` });
+          }
+          gems.push({ x: e.x, y: e.y, type: 'coin', val: Math.round(25 * goldBonus), id: `${Date.now()}-${Math.random()}` });
+          showToast('🎉 精英領主被擊潰！獲得大量經驗獎勵！', 3000);
+          if (activeEvent && activeEvent.type === 'miniboss') activeEvent = null;
+        } else {
+          const drop = (Math.random() < 0.22 || e.isBoss) 
+            ? { x: e.x + 8, y: e.y, type: 'coin', val: Math.round((e.isBoss ? 35 : 5) * goldBonus), id: `${Date.now()}-${Math.random()}` }
+            : { x: e.x, y: e.y, type: 'gem', val: expValue, id: `${Date.now()}-${Math.random()}` };
+
+          gems.push(drop);
+          if (isMultiplayer) {
+            sharedDrops.push(drop);
+            syncPartyRoomState(true);
+          }
         }
         checkAchievements();
       }
@@ -1817,21 +1951,34 @@
         }
       }
 
-      // 7. 劇毒藥劑
+      // 7. 劇毒藥劑 (已全面修復多人模式傷害與範圍)
       const f = WEAPONS.flask;
       if (f.level > 0) {
         f.timer += dt;
-        if (f.timer >= (f.evolved ? 0.9 : Math.max(1.2, 2.2 - f.level * 0.2)) * cdBonus && activeEnemies.length > 0) {
+        if (f.timer >= (f.evolved ? 0.85 : Math.max(1.1, 2.2 - f.level * 0.2)) * cdBonus && activeEnemies.length > 0) {
           f.timer = 0;
           const target = activeEnemies[0];
+          const flaskDmg = (f.evolved ? 42 : 18 + f.level * 8) * dmgBonus;
+          const flaskRadius = (f.evolved ? 130 : 80) * area;
           groundZones.push({
+            id: `zone_${Date.now()}_${Math.random()}`,
             x: target.x, y: target.y,
-            radius: (f.evolved ? 120 : 75) * area,
+            radius: flaskRadius,
             type: 'poison',
-            damage: (f.evolved ? 28 : 12 + f.level * 7) * dmgBonus,
-            life: 5, color: 'rgba(34,197,94,0.3)'
+            damage: flaskDmg,
+            tickTimer: 0,
+            life: 5.0,
+            color: 'rgba(34,197,94,0.35)',
+            isPeerZone: false
           });
-          recordOutgoingAttack({ type: 'flask', x: Math.round(target.x), y: Math.round(target.y), radius: Math.round((f.evolved ? 120 : 75) * area) });
+          recordOutgoingAttack({
+            type: 'flask',
+            x: Math.round(target.x),
+            y: Math.round(target.y),
+            radius: Math.round(flaskRadius),
+            damage: Math.round(flaskDmg),
+            duration: 5.0
+          });
         }
       }
 
@@ -1899,7 +2046,7 @@
           });
           specialVisualEffects.push({
             type: 'laser', x1: player.x, y1: player.y,
-            x2: player.x + Math.cos(ang) * 700, y2: player.y + Math.sin(ang) * 700,
+            x2: player.x + Math.cos(ang) * 700, y2: py + Math.sin(ang) * 700,
             life: 0.18, maxLife: 0.18, color: '#38bdf8', width: l.evolved ? 10 : 6
           });
           recordOutgoingAttack({ type: 'laser', angle: ang, evolved: l.evolved });
@@ -1950,7 +2097,6 @@
       }
     }
 
-    // 多人模式下升級時背景運算：魔物與隊友持續行動，自己獲得無敵保護
     function updateMultiplayerBackground(dt) {
       player.invulnerableTimer = Math.max(player.invulnerableTimer, 1.0);
       camera.x = player.x - window.innerWidth / 2;
@@ -1991,10 +2137,17 @@
         for (let i = enemies.length - 1; i >= 0; i--) {
           const e = enemies[i];
           if (e.dead) { enemies.splice(i, 1); continue; }
+          if (e.localHitCooldown > 0) e.localHitCooldown -= dt;
           if (e.slowTimer > 0) e.slowTimer -= dt;
+
+          // 毒素持續傷害 (跳頻 0.4s)
           if (e.poisonTimer > 0) {
             e.poisonTimer -= dt;
-            damageEnemy(e, (e.poisonDamage || 10) * dt, '#22c55e', true);
+            e.poisonTick = (e.poisonTick || 0) + dt;
+            if (e.poisonTick >= 0.4) {
+              e.poisonTick = 0;
+              damageEnemy(e, e.poisonDamage || 15, '#22c55e', true);
+            }
           }
 
           let targetX = player.x, targetY = player.y;
@@ -2061,6 +2214,52 @@
       if (player.attackPulse > 0) player.attackPulse = Math.max(0, player.attackPulse - dt);
       if (PASSIVES.heart.level > 0) player.hp = Math.min(player.maxHp, player.hp + PASSIVES.heart.level * 1.5 * dt);
 
+      // 特殊事件更新 (房主或單人調度，隊員同步)
+      if (!isMultiplayer || isRoomHost) {
+        if (!activeEvent) {
+          eventCooldownTimer -= dt;
+          if (eventCooldownTimer <= 0) {
+            triggerSpecialEvent();
+            eventCooldownTimer = 45; // 每 45 秒嘗試觸發一次特殊事件
+          }
+        } else {
+          activeEvent.timer -= dt;
+          if (activeEvent.type === 'altar') {
+            const alt = activeEvent.altar;
+            let insideCount = 0;
+            if (Math.hypot(player.x - alt.x, player.y - alt.y) < alt.radius) insideCount++;
+            Object.values(peers).forEach(p => {
+              if (p.currentX && Math.hypot(p.currentX - alt.x, p.currentY - alt.y) < alt.radius) insideCount++;
+            });
+
+            if (insideCount > 0) {
+              alt.progress = Math.min(100, alt.progress + dt * 14 * insideCount);
+              if (alt.progress >= 100) {
+                showToast('✨ 祭壇淨化完成！隊伍全員獲取海量經驗與神聖祝福！', 4000);
+                playSound('levelup');
+                player.hp = Math.min(player.maxHp, player.hp + 40);
+                updateHpUI(player.hp, player.maxHp);
+                // 祭壇四周噴發 14 顆高級經驗水晶
+                for (let k = 0; k < 14; k++) {
+                  const ang = (k / 14) * Math.PI * 2;
+                  gems.push({
+                    x: alt.x + Math.cos(ang) * 45,
+                    y: alt.y + Math.sin(ang) * 45,
+                    type: 'gem', val: 6, id: `altar_gem_${Date.now()}_${k}`
+                  });
+                }
+                activeEvent = null;
+                if (isMultiplayer) syncPartyRoomState(true);
+              }
+            }
+          }
+          if (activeEvent && activeEvent.timer <= 0) {
+            activeEvent = null;
+            if (isMultiplayer) syncPartyRoomState(true);
+          }
+        }
+      }
+
       // 隊友插值同步
       if (isMultiplayer) {
         Object.keys(peers).forEach(id => {
@@ -2070,8 +2269,8 @@
             if (Math.hypot(dx, dy) > 150) {
               p.currentX = p.targetX; p.currentY = p.targetY;
             } else {
-              p.currentX += dx * 0.2;
-              p.currentY += dy * 0.2;
+              p.currentX += dx * 0.25;
+              p.currentY += dy * 0.25;
             }
           }
         });
@@ -2153,32 +2352,58 @@
         }
       }
 
-      // 地面毒池
+      // 地面毒霧/毒池處理 (徹底修復：穩定的週期間隔結算，實打實造成傷害)
       for (let i = groundZones.length - 1; i >= 0; i--) {
         const z = groundZones[i];
         z.life -= dt;
+        z.tickTimer = (z.tickTimer || 0) + dt;
+
         if (z.life <= 0) { groundZones.splice(i, 1); continue; }
-        if (!z.isPeerZone) {
+
+        if (z.tickTimer >= 0.35) {
+          z.tickTimer = 0;
           enemies.forEach(e => {
             if (!e.dead && Math.hypot(e.x - z.x, e.y - z.y) < z.radius) {
-              e.poisonTimer = Math.max(e.poisonTimer || 0, 3);
-              e.poisonDamage = z.damage;
+              damageEnemy(e, z.damage * 0.5, '#4ade80', !isMultiplayer || isRoomHost);
+              e.poisonTimer = 3.0;
+              e.poisonDamage = z.damage * 0.45;
+              playSound('poison');
             }
           });
         }
       }
 
+      // 敵人邏輯更新
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         if (e.dead) { enemies.splice(i, 1); continue; }
 
+        if (e.localHitCooldown > 0) e.localHitCooldown -= dt;
         if (e.slowTimer > 0) e.slowTimer -= dt;
+
+        // 毒素持續狀態傷害
         if (e.poisonTimer > 0) {
           e.poisonTimer -= dt;
-          damageEnemy(e, (e.poisonDamage || 10) * dt, '#22c55e');
+          e.poisonTick = (e.poisonTick || 0) + dt;
+          if (e.poisonTick >= 0.45) {
+            e.poisonTick = 0;
+            damageEnemy(e, e.poisonDamage || 12, '#22c55e', !isMultiplayer || isRoomHost);
+          }
         }
 
-        if (!isMultiplayer || isRoomHost) {
+        // 客戶端平滑補間插值：非房主平滑移動敵人，徹底解決卡頓感
+        if (isMultiplayer && !isRoomHost) {
+          if (e.targetX !== undefined && e.targetY !== undefined) {
+            const dx = e.targetX - e.x, dy = e.targetY - e.y;
+            if (Math.hypot(dx, dy) > 180) {
+              e.x = e.targetX; e.y = e.targetY;
+            } else {
+              e.x += dx * 0.28;
+              e.y += dy * 0.28;
+            }
+          }
+        } else {
+          // 房主或單人模式的主動尋路
           let targetX = player.x, targetY = player.y;
           let minDist = Math.hypot(player.x - e.x, player.y - e.y);
           if (isMultiplayer) {
@@ -2293,7 +2518,7 @@
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       const w = canvas.width, h = canvas.height;
-      const range = 260;
+      const range = 280;
 
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = 'rgba(11, 17, 32, 0.92)';
@@ -2309,12 +2534,20 @@
         y: ((y - (player.y - range)) / (range * 2)) * (h - 12) + 6
       });
 
+      // 小地圖標記祭壇
+      if (activeEvent && activeEvent.type === 'altar' && activeEvent.altar) {
+        const alt = toMini(activeEvent.altar.x, activeEvent.altar.y);
+        ctx.beginPath(); ctx.arc(alt.x, alt.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.6)'; ctx.fill();
+        ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2; ctx.stroke();
+      }
+
       enemies.forEach(e => {
         if (e.dead) return;
         if (Math.abs(e.x - player.x) <= range && Math.abs(e.y - player.y) <= range) {
           const p = toMini(e.x, e.y);
-          ctx.beginPath(); ctx.arc(p.x, p.y, e.isBoss ? 4.5 : 2.2, 0, Math.PI * 2);
-          ctx.fillStyle = e.isBoss ? '#facc15' : '#ef4444'; ctx.fill();
+          ctx.beginPath(); ctx.arc(p.x, p.y, e.isBoss ? 4.5 : (e.isElite ? 3.8 : 2.2), 0, Math.PI * 2);
+          ctx.fillStyle = e.isBoss ? '#facc15' : (e.isElite ? '#c084fc' : '#ef4444'); ctx.fill();
         }
       });
 
@@ -2337,17 +2570,42 @@
       const canvas = document.getElementById('gameCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      // 確保在 UPGRADE 與 PAUSED 狀態下背景依然正常繪製，避免畫面靜止或黑屏
       if (gameState !== 'PLAYING' && gameState !== 'UPGRADE' && gameState !== 'PAUSED') return;
 
       ctx.save(); ctx.translate(-camera.x, -camera.y);
       drawMap(ctx, camera, canvas.width, canvas.height, MAPS[selectedMapKey] || MAPS.dungeon);
 
-      // 地面毒池
+      // 特殊事件：遠古祭壇光圈
+      if (activeEvent && activeEvent.type === 'altar' && activeEvent.altar) {
+        const alt = activeEvent.altar;
+        ctx.save();
+        ctx.beginPath(); ctx.arc(alt.x, alt.y, alt.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.15)'; ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#38bdf8';
+        ctx.setLineDash([8, 6]); ctx.stroke(); ctx.setLineDash([]);
+        // 祭壇進度同心環
+        ctx.beginPath();
+        ctx.arc(alt.x, alt.y, alt.radius * 0.35, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * (alt.progress / 100)));
+        ctx.strokeStyle = '#facc15'; ctx.lineWidth = 6; ctx.stroke();
+        ctx.font = 'bold 12px sans-serif'; ctx.fillStyle = '#facc15'; ctx.textAlign = 'center';
+        ctx.fillText(`遠古祭壇: ${Math.floor(alt.progress)}%`, alt.x, alt.y + 5);
+        ctx.restore();
+      }
+
+      // 地面毒池與毒霧 (渲染腐蝕毒霧氣泡與特效)
       groundZones.forEach(z => {
+        ctx.save();
         ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
         ctx.fillStyle = z.color; ctx.fill();
         ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(74,222,128,0.7)'; ctx.stroke();
+        // 氣泡粒子
+        for (let b = 0; b < 3; b++) {
+          const bx = z.x + (Math.sin(Date.now() * 0.005 + b) * (z.radius * 0.6));
+          const by = z.y + (Math.cos(Date.now() * 0.004 + b * 2) * (z.radius * 0.6));
+          ctx.beginPath(); ctx.arc(bx, by, 3, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(134, 239, 172, 0.8)'; ctx.fill();
+        }
+        ctx.restore();
       });
 
       // 掉落寶石與金幣
@@ -2356,7 +2614,7 @@
         ctx.fillStyle = g.type === 'coin' ? '#facc15' : '#38bdf8'; ctx.fill();
       });
 
-      // 隊友繪製 (含血條、名字、旋轉光球與施法特效)
+      // 隊友繪製
       if (isMultiplayer) {
         const now = Date.now();
         Object.keys(peers).forEach(pid => {
@@ -2368,7 +2626,6 @@
             if (spr) ctx.drawImage(spr, -spr.width / 2, -spr.height / 2);
             ctx.scale(p.facingX < 0 ? -1 : 1, 1);
 
-            // 隊友旋轉光球
             if (p.orbsInfo && p.orbsInfo.active) {
               const oCount = p.orbsInfo.count || 3, oRad = p.orbsInfo.radius || 75;
               const oAng = p.orbsInfo.angle || 0;
@@ -2379,7 +2636,6 @@
               }
             }
 
-            // 隊友名稱與迷你血條
             ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = '#34d399'; ctx.textAlign = 'center';
             ctx.fillText(p.name.split(' ')[0], 0, -26);
             if (p.maxHp) {
@@ -2391,16 +2647,21 @@
         });
       }
 
-      // 敵人繪製
+      // 敵人繪製 (精英與BOSS特殊光環)
       enemies.forEach(e => {
         ctx.save(); ctx.translate(e.x, e.y);
-        const spr = e.isBoss ? SpriteCanvasCache.boss : (SpriteCanvasCache[e.type] || SpriteCanvasCache.bat);
+        if (e.isElite) {
+          ctx.beginPath(); ctx.arc(0, 0, e.radius + 8, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(168, 85, 247, 0.25)'; ctx.fill();
+          ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 2; ctx.stroke();
+        }
+        const spr = e.isBoss ? SpriteCanvasCache.boss : (e.isElite ? SpriteCanvasCache.elite : (SpriteCanvasCache[e.type] || SpriteCanvasCache.bat));
         if(spr) ctx.drawImage(spr, -spr.width/2, -spr.height/2);
         if (e.slowTimer > 0) {
           ctx.beginPath(); ctx.arc(0, 0, e.radius + 6, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(103,232,249,0.7)'; ctx.lineWidth = 2; ctx.stroke();
         }
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(-e.radius, -e.radius-8, e.radius*2, 4);
-        ctx.fillStyle = e.isBoss ? '#facc15' : '#ef4444';
+        ctx.fillStyle = e.isBoss ? '#facc15' : (e.isElite ? '#c084fc' : '#ef4444');
         ctx.fillRect(-e.radius, -e.radius-8, Math.max(0, (e.hp/e.maxHp))*e.radius*2, 4);
         ctx.restore();
       });
@@ -2412,7 +2673,6 @@
       const hSpr = SpriteCanvasCache[`hero_${selectedHeroKey}`];
       if(hSpr) ctx.drawImage(hSpr, -hSpr.width/2, -hSpr.height/2);
 
-      // 本地玩家聖靈光球
       const o = WEAPONS.orbs;
       if (o.level > 0) {
         ctx.scale(player.facingX < 0 ? -1 : 1, 1);
@@ -2426,7 +2686,7 @@
       }
       ctx.restore();
 
-      // 特殊攻擊光波與刀芒 (鞭子、雷射、火環、霜環)
+      // 特殊技能衝擊特效
       specialVisualEffects.forEach(fx => {
         ctx.save();
         if (fx.type === 'whip') {
@@ -2445,7 +2705,6 @@
         ctx.restore();
       });
 
-      // 投射物彈幕
       bullets.forEach(b => {
         ctx.save();
         ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
@@ -2453,13 +2712,11 @@
         ctx.restore();
       });
 
-      // 敵方投射物
       enemyProjectiles.forEach(ep => {
         ctx.beginPath(); ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI * 2);
         ctx.fillStyle = ep.color; ctx.fill();
       });
 
-      // 天罰落雷
       lightningStrikes.forEach(l => {
         ctx.save();
         ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 4;
@@ -2468,7 +2725,6 @@
         ctx.restore();
       });
 
-      // 飄浮傷害數字
       floatingTexts.forEach(ft => {
         ctx.font = `bold ${ft.size||14}px 'Courier New'`;
         ctx.textAlign = 'center'; ctx.fillStyle = ft.color;
@@ -2609,7 +2865,6 @@
       if (gameState === 'PLAYING') {
         update(dt);
       } else if (gameState === 'UPGRADE' && isMultiplayer) {
-        // 多人模式升級時維持背景平滑模擬，絕不凍結畫面
         updateMultiplayerBackground(dt);
       }
       draw();
