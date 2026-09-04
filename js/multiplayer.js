@@ -77,7 +77,19 @@ export async function joinRemoteRoom(roomCode, playerData, onRoomUpdate, isHost 
 export function updateRoomStatus(statusPatch) {
   if (!currentRoomRef) return;
   currentRoomStatus = { ...currentRoomStatus, ...statusPatch };
-  update(currentRoomRef, { status: currentRoomStatus });
+  const statusUpdates = Object.fromEntries(
+    Object.entries(statusPatch).map(([key, value]) => [`status/${key}`, value])
+  );
+  update(currentRoomRef, statusUpdates);
+}
+
+export function updateUpgradeReady(playerId, isReady) {
+  if (!currentRoomRef) return;
+  currentRoomStatus.upgradeReadyPlayers = {
+    ...(currentRoomStatus.upgradeReadyPlayers || {}),
+    [playerId]: isReady
+  };
+  update(currentRoomRef, { [`status/upgradeReadyPlayers/${playerId}`]: isReady });
 }
 
 export function handleRoomUpdate(playersData, localPeers) {
@@ -112,13 +124,7 @@ export function syncLobbyState(isReady, heroKey) {
 // 新增：房主觸發開始遊戲
 export function setRoomPlayingStatus(isPlaying, mapKey) {
   if (!currentRoomRef) return;
-  currentRoomStatus = {
-    ...currentRoomStatus,
-    isPlaying,
-    mapKey,
-    challengeFailed: false
-  };
-  update(currentRoomRef, { status: currentRoomStatus });
+  updateRoomStatus({ isPlaying, mapKey, challengeFailed: false });
 }
 
 export function leaveRemoteRoom() {

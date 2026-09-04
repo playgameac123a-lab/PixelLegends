@@ -2,7 +2,7 @@ import { MAPS, HEROES, WEAPONS, PASSIVES, Talents, ACHIEVEMENTS, EVOLVED_WEAPONS
 import { initDarkPixelIcons, initSprites, drawMap, SpriteCanvasCache, initAudio, playSound, toggleAudio } from './engine.js';
 import { renderAllPixelIcons, showScreen, updateHpUI, updateExpUI, updateGoldUI, updateHUD, updateEquipmentHUD, renderCharSelectUI, updateHeroStage, renderMapSelectUI, renderTalentsUI, renderAchievementsUI, renderUpgradeOptions, renderLobbyCarousel } from './ui.js';
 import { initAuth, loginWithGoogle, saveCloudData, currentUser } from './auth.js';
-import { joinRemoteRoom, handleRoomUpdate, syncPlayerPosition, syncLobbyState, setRoomPlayingStatus, leaveRemoteRoom, updateRoomStatus } from './multiplayer.js';
+import { joinRemoteRoom, handleRoomUpdate, syncPlayerPosition, syncLobbyState, setRoomPlayingStatus, leaveRemoteRoom, updateRoomStatus, updateUpgradeReady } from './multiplayer.js';
 
 let gameState = 'MENU', lastTime = performance.now();
 const camera = { x: 0, y: 0 };
@@ -14,11 +14,13 @@ let enemySpawnCounter = 0, hasEvolvedAny = false;
 let selectedHeroKey = 'knight', previewHeroKey = 'knight', selectedMapKey = 'dungeon';
 
 let isMultiplayer = false, isRoomHost = false, isMyReady = false, currentRoomCode = '';
-let lobbyPlayers = {}, peers = {}, syncTimer = 0, groundZoneSyncTimer = 0;
-let upgradePauseDeadline = 0, upgradeReadyPlayers = {};
+let isLeavingRoom = false;
+let lobbyPlayers = {}, peers = {}, syncTimer = 0, enemySyncTimer = 0, groundZoneSyncTimer = 0;
+let upgradePauseDeadline = 0, lastResolvedUpgradeDeadline = 0, upgradeReadyPlayers = {};
 let upgradeSelectionLocked = false;
 let myPeerId = 'hero_' + Math.random().toString(36).substring(2, 6);
 let myName = '勇者#' + myPeerId.substring(5);
+const COMBAT_RANGE_PADDING = 18;
 
 const keys = { w: false, a: false, s: false, d: false, 1: false, 2: false, 3: false };
 const joystick = { active: false, startX: 0, startY: 0, dx: 0, dy: 0, maxR: 45, deadZone: 5 };
@@ -186,6 +188,7 @@ function bindUIEvents() {
     } 
   };
   document.getElementById('btnLeaveLobby').onclick = () => {
+    isLeavingRoom = true;
     isMultiplayer = false; isRoomHost = false; isMyReady = false; currentRoomCode = '';
     peers = {}; lobbyPlayers = {};
     leaveRemoteRoom(); showScreen('mainMenuScreen');
@@ -205,13 +208,31 @@ function bindUIEvents() {
   };
   document.getElementById('restartBtn').onclick = () => { showScreen(null); startGame(); };
   document.getElementById('endBackMenuBtn').onclick = () => {
+    isLeavingRoom = true;
     document.getElementById('hud').style.display = 'none'; document.getElementById('minimapWrapper').style.display = 'none';
+    if (isMultiplayer || currentRoomCode) {
+      isMultiplayer = false; isRoomHost = false; isMyReady = false; currentRoomCode = '';
+      peers = {}; lobbyPlayers = {}; roomCombatEvents = [];
+      leaveRemoteRoom();
+    }
     showScreen('mainMenuScreen'); gameState = 'MENU';
   };
 }
 
 function getPartySize() {
   return isMultiplayer ? Math.max(1, Object.keys(lobbyPlayers || {}).length || 1) : 1;
+}
+
+function getCombatRange() {
+  return Math.hypot(window.innerWidth / 2, window.innerHeight / 2) + COMBAT_RANGE_PADDING;
+}
+
+function isEnemyInCombatRange(enemy) {
+  return enemy && !enemy.dead && Math.hypot(enemy.x - player.x, enemy.y - player.y) <= getCombatRange();
+}
+
+function getCombatRangeEnemies() {
+  return enemies.filter(isEnemyInCombatRange);
 }
 
 function updatePartyReviveDisplay() {
@@ -314,7 +335,14 @@ function updateUpgradeWaitUI() {
   waitEl.classList.add('visible');
 }
 
+function areAllPlayersUpgradeReady() {
+  const playerIds = Object.keys(lobbyPlayers || {});
+  return playerIds.length > 0 && playerIds.every(id => upgradeReadyPlayers[id] === true);
+}
+
 function resumeAfterUpgrade() {
+  if (isLeavingRoom) return;
+  lastResolvedUpgradeDeadline = Math.max(lastResolvedUpgradeDeadline, upgradePauseDeadline);
   upgradePauseDeadline = 0;
   upgradeReadyPlayers = {};
   upgradeSelectionLocked = false;
@@ -332,10 +360,11 @@ function resumeAfterUpgrade() {
 function beginUpgradePause() {
   if (gameState === 'UPGRADE' && upgradePauseDeadline) return;
   upgradePauseDeadline = Date.now() + 30000;
-  upgradeReadyPlayers = { ...(upgradeReadyPlayers || {}), [myPeerId]: false };
+  upgradeReadyPlayers = { [myPeerId]: false };
   updateUpgradeWaitUI();
   if (isMultiplayer && currentRoomCode) {
-    updateRoomStatus({ isUpgradePaused: true, upgradePauseDeadline, upgradeReadyPlayers });
+    updateRoomStatus({ isUpgradePaused: true, upgradePauseDeadline, upgradeReadyPlayers: {} });
+    updateUpgradeReady(myPeerId, false);
   }
 }
 
@@ -369,11 +398,41 @@ function syncPartyRoomState(force = false, revivesOverride = null) {
     isUpgradePaused: !!upgradePauseDeadline,
     upgradePauseDeadline: upgradePauseDeadline || 0
   };
+  if (isRoomHost) {
+    payload.enemies = enemies.filter(enemy => enemy && !enemy.dead).map(enemy => ({
+      id: enemy.id,
+      x: enemy.x,
+      y: enemy.y,
+      type: enemy.type,
+      hp: enemy.hp,
+      maxHp: enemy.maxHp,
+      speed: enemy.speed,
+      radius: enemy.radius,
+      damage: enemy.damage,
+      shootTimer: enemy.shootTimer,
+      slowTimer: enemy.slowTimer,
+      poisonTimer: enemy.poisonTimer
+    }));
+  }
   updateRoomStatus(payload);
+}
+
+function applyRemoteEnemies(remoteEnemies) {
+  const existing = new Map(enemies.filter(enemy => enemy && enemy.id).map(enemy => [enemy.id, enemy]));
+  const nextEnemies = remoteEnemies.map(remoteEnemy => {
+    const localEnemy = existing.get(remoteEnemy.id);
+    if (localEnemy) {
+      Object.assign(localEnemy, remoteEnemy);
+      return localEnemy;
+    }
+    return { ...remoteEnemy, dead: false, poisonDamage: 0, poisonDamageTick: 0 };
+  });
+  enemies = nextEnemies;
 }
 
 function joinLobby(code, asHost) {
   if(!code) return;
+  isLeavingRoom = false;
   initAudio(); currentRoomCode = code; isRoomHost = asHost; isMyReady = asHost;
 
   const localSelf = { id: myPeerId, name: myName, heroKey: selectedHeroKey, isHost: asHost, isReady: asHost, x: 0, y: 0, hp: 100, maxHp: 100, facingX: 1, level: 1 };
@@ -381,6 +440,7 @@ function joinLobby(code, asHost) {
   showLobbyUI();
 
   joinRemoteRoom(code, localSelf, (playersData, status) => {
+    if (isLeavingRoom || currentRoomCode !== code) return;
     lobbyPlayers = playersData || { [myPeerId]: localSelf };
     if (status && typeof status.revivesRemaining === 'number') sharedRevivesRemaining = status.revivesRemaining;
     if (status && typeof status.partyExp === 'number') {
@@ -408,15 +468,21 @@ function joinLobby(code, asHost) {
         }));
     }
     if (status && Array.isArray(status.combatEvents)) roomCombatEvents = status.combatEvents.slice(-18);
+    if (status && Array.isArray(status.enemies) && isMultiplayer && !isRoomHost) applyRemoteEnemies(status.enemies);
     if (status && typeof status.challengeFailed === 'boolean') sharedChallengeFailed = status.challengeFailed;
     if (status && status.upgradeReadyPlayers) upgradeReadyPlayers = { ...status.upgradeReadyPlayers };
     if (status && typeof status.upgradePauseDeadline === 'number') upgradePauseDeadline = status.upgradePauseDeadline;
     if (status && typeof status.isUpgradePaused === 'boolean') {
-      if (status.isUpgradePaused && gameState !== 'UPGRADE') {
+      const remoteUpgradeDeadline = Number(status.upgradePauseDeadline || 0);
+      const isResolvedUpgrade = remoteUpgradeDeadline > 0 && remoteUpgradeDeadline <= lastResolvedUpgradeDeadline;
+      if (status.isUpgradePaused && !isResolvedUpgrade && gameState !== 'UPGRADE') {
         if (typeof status.upgradePauseDeadline === 'number') upgradePauseDeadline = status.upgradePauseDeadline;
         if (upgradePauseDeadline && Date.now() < upgradePauseDeadline) {
-          showUpgradeMenu();
+          if (areAllPlayersUpgradeReady()) resumeAfterUpgrade();
+          else showUpgradeMenu();
         }
+      } else if (status.isUpgradePaused && !isResolvedUpgrade && gameState === 'UPGRADE' && areAllPlayersUpgradeReady()) {
+        resumeAfterUpgrade();
       } else if (!status.isUpgradePaused && gameState === 'UPGRADE') {
         resumeAfterUpgrade();
       }
@@ -534,6 +600,7 @@ function startGame() {
     sharedDrops = [];
     sharedChallengeFailed = false;
     roomCombatEvents = [];
+    enemySyncTimer = 0;
     groundZoneSyncTimer = 0;
     syncPartyRoomState(true);
   }
@@ -559,7 +626,7 @@ function spawnEnemy() {
   const speedConfig = { bat: 2.2, archer: 1.4, brute: 1.1, imp: 2.6, lich: 1.2, ghost: 2.8, gargoyle: 1.5 };
   let hp = (hpConfig[type] || 25) * (1 + currentWave * 0.28) * map.enemyHp;
 
-  enemies.push({ x: player.x + Math.cos(angle)*dist, y: player.y + Math.sin(angle)*dist, type, hp, maxHp: hp, speed: (speedConfig[type] || 1.5) * map.enemySpeed, radius: (type === 'brute' || type === 'lich') ? 18 : 12, damage: 12 + Math.floor(currentWave * 1.5), shootTimer: 0, slowTimer: 0, poisonTimer: 0 });
+  enemies.push({ id: `enemy_${Date.now()}_${Math.random().toString(16).slice(2)}`, x: player.x + Math.cos(angle)*dist, y: player.y + Math.sin(angle)*dist, type, hp, maxHp: hp, speed: (speedConfig[type] || 1.5) * map.enemySpeed, radius: (type === 'brute' || type === 'lich') ? 18 : 12, damage: 12 + Math.floor(currentWave * 1.5), shootTimer: 0, slowTimer: 0, poisonTimer: 0 });
 }
 
 function damageEnemy(e, dmg, color = '#fff') {
@@ -569,7 +636,9 @@ function damageEnemy(e, dmg, color = '#fff') {
   if (e.hp <= 0 && !e.dead) {
     e.dead = true; killCount++; totalKills++;
     const goldBonus = (1 + Talents.greed.level * Talents.greed.value) * (1 + PASSIVES.greed_pass.level * 0.3);
-    const drop = Math.random() < 0.2 ? { x: e.x + 10, y: e.y, type: 'coin', val: Math.round(5 * goldBonus) } : { x: e.x, y: e.y, type: 'gem', val: (e.type==='brute' || e.type==='lich') ? 4 : 1 };
+    const expBase = (e.type === 'brute' || e.type === 'lich') ? 4 : 1;
+    const expValue = Math.max(1, Math.round(expBase * (1 + currentWave * 0.12)));
+    const drop = Math.random() < 0.2 ? { x: e.x + 10, y: e.y, type: 'coin', val: Math.round(5 * goldBonus) } : { x: e.x, y: e.y, type: 'gem', val: expValue };
     gems.push({ ...drop, id: `${Date.now()}-${Math.random()}` });
     if (isMultiplayer) {
       sharedDrops = [...sharedDrops, { ...drop, id: `${Date.now()}-${Math.random()}` }].slice(-60);
@@ -614,19 +683,29 @@ function showUpgradeMenu() {
     const w = WEAPONS[k];
     if (w.level >= w.maxLevel && !w.evolved && PASSIVES[w.requiredPassive]?.level >= 1) {
       const evo = EVOLVED_WEAPONS[w.evolvesInto];
-      options.push({ type: 'evolve', id: k, name: evo.name, iconKey: evo.iconKey, desc: evo.desc, apply: () => { w.evolved = true; hasEvolvedAny = true; } });
+      options.push({ type: 'evolve', id: k, weight: 3, name: evo.name, iconKey: evo.iconKey, desc: evo.desc, apply: () => { w.evolved = true; hasEvolvedAny = true; } });
     } else if (w.level > 0 && w.level < w.maxLevel && !w.evolved) {
-      options.push({ type: 'weapon', id: k, name: `${w.name} (LV ${w.level + 1})`, iconKey: w.iconKey, desc: '提升威力與射速', apply: () => w.level++ });
+      options.push({ type: 'weapon', id: k, weight: 3, name: `${w.name} (LV ${w.level + 1})`, iconKey: w.iconKey, desc: '提升威力與射速', apply: () => w.level++ });
     } else if (w.level === 0) {
-      options.push({ type: 'weapon', id: k, name: w.name, iconKey: w.iconKey, desc: w.desc, apply: () => w.level++ });
+      options.push({ type: 'weapon', id: k, weight: 1, name: w.name, iconKey: w.iconKey, desc: w.desc, apply: () => w.level++ });
     }
   });
   Object.keys(PASSIVES).forEach(k => {
     const p = PASSIVES[k];
-    if (p.level < p.maxLevel) options.push({ type: 'passive', id: k, name: `${p.name} (LV ${p.level + 1})`, iconKey: p.iconKey, desc: p.desc, apply: () => p.level++ });
+    if (p.level < p.maxLevel) options.push({ type: 'passive', id: k, weight: p.level > 0 ? 3 : 1, name: `${p.name} (LV ${p.level + 1})`, iconKey: p.iconKey, desc: p.desc, apply: () => p.level++ });
   });
 
-  const selected = options.sort(() => 0.5 - Math.random()).slice(0, 3);
+  const availableOptions = [...options];
+  const selected = [];
+  while (selected.length < 3 && availableOptions.length > 0) {
+    const totalWeight = availableOptions.reduce((sum, option) => sum + (option.weight || 1), 0);
+    let roll = Math.random() * totalWeight;
+    const selectedIndex = availableOptions.findIndex(option => {
+      roll -= option.weight || 1;
+      return roll < 0;
+    });
+    selected.push(availableOptions.splice(selectedIndex < 0 ? 0 : selectedIndex, 1)[0]);
+  }
   if (selected.length === 0) selected.push({ type: 'gold', name: '諸神賜福', iconKey: 'gold_coin', desc: '獲取 150 金幣', apply: () => { sessionGold += 150; updateGoldUI(sessionGold); } });
 
   const finalizeSelection = (opt) => {
@@ -643,8 +722,8 @@ function showUpgradeMenu() {
       const nextReady = { ...(upgradeReadyPlayers || {}), [myPeerId]: true };
       upgradeReadyPlayers = nextReady;
       updateUpgradeWaitUI();
-      updateRoomStatus({ upgradeReadyPlayers: nextReady, isUpgradePaused: false, upgradePauseDeadline: 0 });
-      resumeAfterUpgrade();
+      updateUpgradeReady(myPeerId, true);
+      if (areAllPlayersUpgradeReady()) resumeAfterUpgrade();
       return;
     }
     resumeAfterUpgrade();
@@ -658,17 +737,16 @@ function showUpgradeMenu() {
 function updateWeapons(dt) {
   const dmgBonus = player.damageMult * (1 + PASSIVES.power.level * 0.2), cdBonus = player.cooldownMult * Math.max(0.35, 1 - PASSIVES.tome.level * 0.12);
   const extra = PASSIVES.duplicator.level, area = 1 + PASSIVES.candle.level * 0.25;
+  const combatEnemies = getCombatRangeEnemies();
 
   const w = WEAPONS.wand;
   if (w.level > 0) {
     w.timer += dt;
-    if (w.timer >= (w.evolved?0.11:Math.max(0.18, 0.75-w.level*0.1))*cdBonus && enemies.length > 0) {
-      w.timer = 0; player.attackPulse = 0.18; const t = enemies[0], a = Math.atan2(t.y-player.y, t.x-player.x);
+    if (w.timer >= (w.evolved?0.11:Math.max(0.18, 0.75-w.level*0.1))*cdBonus && combatEnemies.length > 0) {
+      w.timer = 0; player.attackPulse = 0.18; const t = combatEnemies[0], a = Math.atan2(t.y-player.y, t.x-player.x);
       const cnt = (w.evolved?3:(1+Math.floor(w.level/2))) + extra;
-      if (isMultiplayer && currentRoomCode) {
-        queueCombatEvent('projectile', player.x, player.y, { radius: 8, color: '#38bdf8', life: 0.25, targetX: player.x + Math.cos(a) * 30, targetY: player.y + Math.sin(a) * 30 });
-        queueCombatEvent('burst', player.x, player.y, { radius: 12, color: '#38bdf8', life: 0.35, targetX: t.x, targetY: t.y });
-      }
+      queueCombatEvent('projectile', player.x, player.y, { radius: 8, color: '#38bdf8', life: 0.25, targetX: player.x + Math.cos(a) * 30, targetY: player.y + Math.sin(a) * 30 });
+      queueCombatEvent('burst', player.x, player.y, { radius: 12, color: '#38bdf8', life: 0.35, targetX: t.x, targetY: t.y });
       for(let i=0; i<cnt; i++) bullets.push({ x: player.x, y: player.y, vx: Math.cos(a+(i*0.16))*9, vy: Math.sin(a+(i*0.16))*9, radius: (w.evolved?7:5)*area, color: w.evolved?'#f59e0b':'#38bdf8', damage: (w.evolved?48:20+w.level*8)*dmgBonus, pierce: w.evolved?3:1, life: 1.8 });
     }
   }
@@ -688,10 +766,8 @@ function updateWeapons(dt) {
     d.timer += dt;
     if (d.timer >= (d.evolved?0.22:Math.max(0.28, 1.0-d.level*0.14))*cdBonus) {
       d.timer = 0; player.attackPulse = 0.18; const a = Math.atan2(player.facingY||0, player.facingX||1), cnt = (d.evolved?14:1+d.level)+extra;
-      if (isMultiplayer && currentRoomCode) {
-        queueCombatEvent('projectile', player.x, player.y, { radius: 7, color: '#a855f7', life: 0.3, targetX: player.x + Math.cos(a) * 40, targetY: player.y + Math.sin(a) * 40 });
-        queueCombatEvent('burst', player.x, player.y, { radius: 14, color: '#a855f7', life: 0.32, targetX: player.x + Math.cos(a) * 50, targetY: player.y + Math.sin(a) * 50 });
-      }
+      queueCombatEvent('projectile', player.x, player.y, { radius: 7, color: '#a855f7', life: 0.3, targetX: player.x + Math.cos(a) * 40, targetY: player.y + Math.sin(a) * 40 });
+      queueCombatEvent('burst', player.x, player.y, { radius: 14, color: '#a855f7', life: 0.32, targetX: player.x + Math.cos(a) * 50, targetY: player.y + Math.sin(a) * 50 });
       for(let i=0; i<cnt; i++) {
         const ang = d.evolved ? (i/14)*Math.PI*2 : a + (i - (cnt-1)/2)*0.12;
         bullets.push({ x: player.x, y: player.y, vx: Math.cos(ang)*12, vy: Math.sin(ang)*12, radius: (d.evolved?6:4)*area, color: d.evolved?'#a855f7':'#e2e8f0', damage: (d.evolved?42:18+d.level*6)*dmgBonus, pierce: d.evolved?999:2+Math.floor(d.level/2), life: 1.5 });
@@ -701,11 +777,11 @@ function updateWeapons(dt) {
   const t = WEAPONS.thunder;
   if (t.level > 0) {
     t.timer += dt;
-    if (t.timer >= (t.evolved?0.55:Math.max(0.7, 2.0-t.level*0.25))*cdBonus && enemies.length > 0) {
+    if (t.timer >= (t.evolved?0.55:Math.max(0.7, 2.0-t.level*0.25))*cdBonus && combatEnemies.length > 0) {
       t.timer = 0; player.attackPulse = 0.2; const cnt = (t.evolved?9:1+Math.floor(t.level/2))+extra;
-      const target = [...enemies].sort(()=>0.5-Math.random()).slice(0,cnt)[0];
-      if (isMultiplayer && currentRoomCode && target) queueCombatEvent('burst', target.x, target.y, { radius: 20, color: '#38bdf8', life: 0.38, targetX: target.x, targetY: target.y });
-      [...enemies].sort(()=>0.5-Math.random()).slice(0,cnt).forEach(e => { damageEnemy(e, (t.evolved?140:50+t.level*22)*dmgBonus, '#38bdf8'); lightningStrikes.push({ x: e.x, y: e.y, life: 0.18 }); });
+      const target = [...combatEnemies].sort(()=>0.5-Math.random()).slice(0,cnt)[0];
+      if (target) queueCombatEvent('burst', target.x, target.y, { radius: 20, color: '#38bdf8', life: 0.38, targetX: target.x, targetY: target.y });
+      [...combatEnemies].sort(()=>0.5-Math.random()).slice(0,cnt).forEach(e => { damageEnemy(e, (t.evolved?140:50+t.level*22)*dmgBonus, '#38bdf8'); lightningStrikes.push({ x: e.x, y: e.y, life: 0.18 }); });
     }
   }
   const wW = WEAPONS.whip;
@@ -730,7 +806,7 @@ function updateWeapons(dt) {
     b.timer += dt;
     if (b.timer >= (b.evolved?0.45:1.1-b.level*0.12)*cdBonus) {
       b.timer = 0; player.attackPulse = 0.18; const a = Math.atan2(player.facingY||0, player.facingX||1);
-      if (isMultiplayer && currentRoomCode) queueCombatEvent('projectile', player.x, player.y, { radius: 9, color: '#fde047', life: 0.26, targetX: player.x + Math.cos(a) * 50, targetY: player.y + Math.sin(a) * 50 });
+      queueCombatEvent('projectile', player.x, player.y, { radius: 9, color: '#fde047', life: 0.26, targetX: player.x + Math.cos(a) * 50, targetY: player.y + Math.sin(a) * 50 });
       bullets.push({ x: player.x, y: player.y, vx: Math.cos(a)*15, vy: Math.sin(a)*15, radius: (b.evolved?9:5)*area, color: '#fde047', damage: (b.evolved?120:45+b.level*18)*dmgBonus, pierce: b.evolved?999:2+b.level, life: 1.8 });
     }
   }
@@ -740,11 +816,11 @@ function updateWeapons(dt) {
     const poisonRange = (f.evolved ? 120 : 80) * area;
     if (f.timer >= (f.evolved ? 1.0 : Math.max(1.3, 2.2 - f.level * 0.2)) * cdBonus) {
       f.timer = 0;
-      const target = [...enemies].sort((a, b) => Math.hypot(a.x - player.x, a.y - player.y) - Math.hypot(b.x - player.x, b.y - player.y))[0];
+      const target = [...combatEnemies].sort((a, b) => Math.hypot(a.x - player.x, a.y - player.y) - Math.hypot(b.x - player.x, b.y - player.y))[0];
       if (target) {
         groundZones.push({ x: target.x, y: target.y, radius: poisonRange, type: 'poison', damage: (f.evolved ? 26 : 12 + f.level * 7) * dmgBonus, life: 5, color: 'rgba(34,197,94,0.28)' });
+        queueCombatEvent('poison', target.x, target.y, { radius: poisonRange, color: 'rgba(34,197,94,0.65)', life: 5, targetX: target.x, targetY: target.y });
         if (isMultiplayer && currentRoomCode) {
-          queueCombatEvent('poison', target.x, target.y, { radius: poisonRange, color: 'rgba(34,197,94,0.65)', life: 5, targetX: target.x, targetY: target.y });
           syncPartyRoomState(true);
         }
         lightningStrikes.push({ x: target.x, y: target.y, life: 0.12 });
@@ -756,7 +832,7 @@ function updateWeapons(dt) {
     fr.timer += dt;
     if (fr.timer >= (fr.evolved?1.0:2.2-fr.level*0.2)*cdBonus) {
       fr.timer = 0; const rng = (fr.evolved?240:130)*area;
-      enemies.forEach(e => { if(Math.hypot(e.x-player.x, e.y-player.y) < rng) damageEnemy(e, (fr.evolved?95:30+fr.level*12)*dmgBonus, '#f97316'); });
+      combatEnemies.forEach(e => { if(Math.hypot(e.x-player.x, e.y-player.y) < rng) damageEnemy(e, (fr.evolved?95:30+fr.level*12)*dmgBonus, '#f97316'); });
     }
   }
   const frost = WEAPONS.frost;
@@ -765,7 +841,7 @@ function updateWeapons(dt) {
     if (frost.timer >= (frost.evolved ? 0.9 : Math.max(1.2, 2.0 - frost.level * 0.15)) * cdBonus) {
       frost.timer = 0;
       const radius = frost.evolved ? 160 : 95;
-      enemies.forEach(e => {
+      combatEnemies.forEach(e => {
         if (Math.hypot(e.x - player.x, e.y - player.y) < radius) {
           damageEnemy(e, (frost.evolved ? 88 : 18 + frost.level * 10) * dmgBonus, '#67e8f9');
           e.slowTimer = Math.max(e.slowTimer || 0, frost.evolved ? 2.0 : 1.2);
@@ -776,16 +852,16 @@ function updateWeapons(dt) {
   const laser = WEAPONS.laser;
   if (laser.level > 0) {
     laser.timer += dt;
-    if (laser.timer >= (laser.evolved ? 0.18 : Math.max(0.35, 0.9 - laser.level * 0.08)) * cdBonus && enemies.length > 0) {
+    if (laser.timer >= (laser.evolved ? 0.18 : Math.max(0.35, 0.9 - laser.level * 0.08)) * cdBonus && combatEnemies.length > 0) {
       laser.timer = 0; player.attackPulse = 0.16;
-      const target = enemies.reduce((best, e) => {
+      const target = combatEnemies.reduce((best, e) => {
         const d = Math.hypot(e.x - player.x, e.y - player.y);
         if (!best || d < best.dist) return { e, dist: d };
         return best;
       }, null);
       if (target) {
         const ang = Math.atan2(target.e.y - player.y, target.e.x - player.x);
-        if (isMultiplayer && currentRoomCode) queueCombatEvent('projectile', player.x, player.y, { radius: 10, color: '#38bdf8', life: 0.28, targetX: target.e.x, targetY: target.e.y });
+        queueCombatEvent('projectile', player.x, player.y, { radius: 10, color: '#38bdf8', life: 0.28, targetX: target.e.x, targetY: target.e.y });
         bullets.push({ x: player.x, y: player.y, vx: Math.cos(ang) * 18, vy: Math.sin(ang) * 18, radius: laser.evolved ? 9 : 6, color: '#38bdf8', damage: (laser.evolved ? 150 : 35 + laser.level * 15) * dmgBonus, pierce: laser.evolved ? 9 : 4, life: 1.5, type: 'laser' });
       }
     }
@@ -796,9 +872,7 @@ function updateWeapons(dt) {
     if (spear.timer >= (spear.evolved ? 0.5 : Math.max(0.8, 1.7 - spear.level * 0.12)) * cdBonus) {
       spear.timer = 0; player.attackPulse = 0.2;
       const angles = spear.evolved ? Array.from({ length: 8 }, (_, i) => (i / 8) * Math.PI * 2) : [-0.9, -0.3, 0.3, 0.9];
-      if (isMultiplayer && currentRoomCode) {
-        angles.forEach((a) => queueCombatEvent('projectile', player.x, player.y, { radius: 7, color: '#facc15', life: 0.24, targetX: player.x + Math.cos(a) * 35, targetY: player.y + Math.sin(a) * 35 }));
-      }
+      angles.forEach((a) => queueCombatEvent('projectile', player.x, player.y, { radius: 7, color: '#facc15', life: 0.24, targetX: player.x + Math.cos(a) * 35, targetY: player.y + Math.sin(a) * 35 }));
       angles.forEach((a) => {
         bullets.push({ x: player.x, y: player.y, vx: Math.cos(a) * 12, vy: Math.sin(a) * 12, radius: spear.evolved ? 9 : 5.5, color: '#facc15', damage: (spear.evolved ? 130 : 28 + spear.level * 12) * dmgBonus, pierce: spear.evolved ? 6 : 2, life: 1.4 });
       });
@@ -807,11 +881,11 @@ function updateWeapons(dt) {
   const skull = WEAPONS.skull;
   if (skull.level > 0) {
     skull.timer += dt;
-    if (skull.timer >= (skull.evolved ? 0.9 : Math.max(1.3, 2.2 - skull.level * 0.16)) * cdBonus && enemies.length > 0) {
+    if (skull.timer >= (skull.evolved ? 0.9 : Math.max(1.3, 2.2 - skull.level * 0.16)) * cdBonus && combatEnemies.length > 0) {
       skull.timer = 0; player.attackPulse = 0.16;
-      const target = enemies[Math.floor(Math.random() * enemies.length)];
+      const target = combatEnemies[Math.floor(Math.random() * combatEnemies.length)];
       if (target) {
-        if (isMultiplayer && currentRoomCode) queueCombatEvent('projectile', player.x, player.y, { radius: 8, color: '#c084fc', life: 0.26, targetX: target.x, targetY: target.y });
+        queueCombatEvent('projectile', player.x, player.y, { radius: 8, color: '#c084fc', life: 0.26, targetX: target.x, targetY: target.y });
         bullets.push({ x: player.x, y: player.y, vx: (target.x - player.x) / Math.max(1, Math.hypot(target.x - player.x, target.y - player.y)) * 10, vy: (target.y - player.y) / Math.max(1, Math.hypot(target.x - player.x, target.y - player.y)) * 10, radius: skull.evolved ? 10 : 6, color: '#c084fc', damage: (skull.evolved ? 110 : 24 + skull.level * 14) * dmgBonus, pierce: 2, life: 1.6, type: 'skull' });
       }
     }
@@ -906,13 +980,21 @@ function update(dt) {
     let hit = false;
     for (let j = enemies.length - 1; j >= 0; j--) {
       const e = enemies[j];
-      if (Math.hypot(b.x - e.x, b.y - e.y) < b.radius + e.radius) { damageEnemy(e, b.damage, b.color); b.pierce--; if (b.pierce <= 0) { hit = true; break; } }
+      if (isEnemyInCombatRange(e) && Math.hypot(b.x - e.x, b.y - e.y) < b.radius + e.radius) { damageEnemy(e, b.damage, b.color); b.pierce--; if (b.pierce <= 0) { hit = true; break; } }
     }
     if (hit || b.life <= 0) bullets.splice(i, 1);
   }
 
   enemySpawnCounter += dt;
-  if (enemySpawnCounter >= Math.max(0.15, 0.9 - currentWave*0.01) && enemies.length < 150) { spawnEnemy(); enemySpawnCounter = 0; }
+  if ((!isMultiplayer || isRoomHost) && enemySpawnCounter >= Math.max(0.15, 0.9 - currentWave*0.01) && enemies.length < 150) { spawnEnemy(); enemySpawnCounter = 0; }
+
+  if (isMultiplayer && isRoomHost && currentRoomCode) {
+    enemySyncTimer -= dt;
+    if (enemySyncTimer <= 0) {
+      syncPartyRoomState(true);
+      enemySyncTimer = 0.25;
+    }
+  }
   
   for (let i = groundZones.length - 1; i >= 0; i--) {
     const z = groundZones[i];
@@ -956,6 +1038,7 @@ function update(dt) {
       }
     }
     const dist = Math.hypot(player.x - e.x, player.y - e.y), a = Math.atan2(player.y - e.y, player.x - e.x);
+    if (isMultiplayer && !isRoomHost) continue;
     if (e.type === 'archer') {
       if (dist > 200) { e.x += Math.cos(a)*e.speed*60*dt; e.y += Math.sin(a)*e.speed*60*dt; }
       else if (dist < 140) { e.x -= Math.cos(a)*e.speed*60*dt; e.y -= Math.sin(a)*e.speed*60*dt; }
