@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>百鬼夜行：逢魔之刻 - 多人聯機退魔陣</title>
+  <title>百鬼夜行：逢魔之刻 - 四人抗延遲聯機拔除陣</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Kaisei Tokumin & Noto Serif JP -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kaisei+Tokumin:wght@500;700;800&family=Noto+Serif+JP:wght@400;600;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kaisei+Tokumin:wght@500;700;800&family=Noto+Serif+JP:wght@400;600;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
   
   <style>
     * {
@@ -20,7 +20,7 @@
     }
     body {
       font-family: 'Kaisei Tokumin', 'Noto Serif JP', serif;
-      background-color: #08060c;
+      background-color: #07050b;
       color: #ede2d1;
       overflow: hidden;
       margin: 0;
@@ -28,26 +28,29 @@
       width: 100vw;
       height: 100vh;
     }
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
     .bg-twilight-mesh {
-      background: radial-gradient(circle at 50% 20%, #1e132b 0%, #0c0817 60%, #050308 100%);
+      background: radial-gradient(circle at 50% 20%, #201330 0%, #0d0818 60%, #050308 100%);
     }
     .text-gold {
       color: #ffd166;
-      text-shadow: 0 0 10px rgba(255, 209, 102, 0.45);
+      text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
     }
     .text-vermilion {
       color: #e63946;
-      text-shadow: 0 0 12px rgba(230, 57, 70, 0.55);
+      text-shadow: 0 0 12px rgba(230, 57, 70, 0.6);
     }
     .glass-card {
-      background: rgba(18, 14, 28, 0.72);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(212, 175, 55, 0.25);
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), inset 0 0 20px rgba(255, 209, 102, 0.05);
+      background: rgba(16, 12, 26, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.28);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(255, 209, 102, 0.04);
     }
     .glass-card-hover:hover {
-      border-color: rgba(255, 209, 102, 0.6);
+      border-color: rgba(255, 209, 102, 0.65);
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), inset 0 0 25px rgba(255, 209, 102, 0.12);
     }
     .border-gold-glow {
@@ -56,19 +59,19 @@
     }
     .border-vermilion-glow {
       border: 2px solid #b83232;
-      box-shadow: 0 0 16px rgba(184, 50, 50, 0.4);
+      box-shadow: 0 0 16px rgba(184, 50, 50, 0.45);
     }
     @keyframes pulseAura {
-      0%, 100% { transform: scale(1); opacity: 0.92; filter: drop-shadow(0 0 10px #e63946); }
-      50% { transform: scale(1.03); opacity: 1; filter: drop-shadow(0 0 20px #ffd166); }
+      0%, 100% { transform: scale(1); opacity: 0.95; filter: drop-shadow(0 0 10px #e63946); }
+      50% { transform: scale(1.02); opacity: 1; filter: drop-shadow(0 0 22px #ffd166); }
     }
     .animate-pulse-aura {
-      animation: pulseAura 3s infinite ease-in-out;
+      animation: pulseAura 3.5s infinite ease-in-out;
     }
     @keyframes countdownPulse {
       0% { transform: scale(0.6); opacity: 0; }
-      50% { transform: scale(1.15); opacity: 1; }
-      100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.18); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.92; }
     }
     .animate-countdown {
       animation: countdownPulse 0.9s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
@@ -80,11 +83,10 @@
       image-rendering: crisp-edges;
     }
     .crt-scanlines {
-      background: linear-gradient(rgba(18, 16, 26, 0) 50%, rgba(0, 0, 0, 0.32) 50%);
+      background: linear-gradient(rgba(18, 16, 26, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
       background-size: 100% 4px;
       pointer-events: none;
     }
-    /* Custom Scrollbar for chat and player rosters */
     ::-webkit-scrollbar {
       width: 5px;
     }
@@ -92,25 +94,26 @@
       background: rgba(10, 8, 16, 0.5);
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(179, 139, 77, 0.4);
+      background: rgba(179, 139, 77, 0.45);
       border-radius: 4px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 209, 102, 0.7);
+      background: rgba(255, 209, 102, 0.8);
     }
   </style>
 </head>
 
 <body class="bg-twilight-mesh select-none overflow-hidden relative w-full h-full text-stone-200">
-  <div class="crt-scanlines absolute inset-0 pointer-events-none z-20 opacity-60"></div>
+  <div class="crt-scanlines absolute inset-0 pointer-events-none z-20 opacity-55"></div>
 
-  <!-- Toast Notification Center (Top Center) -->
+  <!-- Toast Notification Center -->
   <div id="toastContainer" class="fixed top-4 inset-x-0 z-50 flex flex-col items-center gap-2 pointer-events-none px-4"></div>
 
-  <!-- Realtime Sync & Connection Status Badge (Top Right) -->
-  <div class="fixed top-3 right-3 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/70 border border-amber-500/30 text-[11px] backdrop-blur-md">
-    <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-    <span id="syncText" class="text-amber-200 font-bold">同步中 (0ms)</span>
+  <!-- Anti-Lag / Realtime Network Telemetry Badge (Top Right) -->
+  <div id="netStatusBadge" class="fixed top-3 right-3 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/80 border border-amber-500/30 text-[11px] backdrop-blur-md shadow-lg transition-all">
+    <span id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+    <span id="syncText" class="text-amber-200 font-bold font-mono-code">同步正常 (12ms)</span>
+    <span id="netModeBadge" class="text-[9px] px-1.5 py-0.5 rounded bg-amber-950 border border-amber-600/40 text-amber-300">防卡頓引擎</span>
   </div>
 
   <div id="appContainer" class="relative w-full h-full flex flex-col justify-between overflow-hidden">
@@ -121,43 +124,43 @@
     <div id="viewHub" class="absolute inset-0 z-30 flex flex-col items-center justify-between p-4 sm:p-8 overflow-y-auto">
       <!-- Title Header -->
       <div class="text-center mt-6 sm:mt-10 animate-pulse-aura">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-950/70 border border-red-500/40 text-[11px] sm:text-xs text-red-300 mb-2">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-950/80 border border-red-500/40 text-[11px] sm:text-xs text-red-300 mb-2.5 shadow-md">
           <span>⛩️</span>
-          <span>四人法陣・百鬼退魔聯機系統</span>
+          <span>逢魔之刻・四人聯機退魔陣 (防延遲平滑版)</span>
         </div>
-        <h1 class="text-3xl sm:text-6xl font-black tracking-widest text-vermilion drop-shadow-[0_4px_16px_rgba(230,57,70,0.6)]">
+        <h1 class="text-3xl sm:text-6xl font-black tracking-widest text-vermilion drop-shadow-[0_4px_18px_rgba(230,57,70,0.65)]">
           百鬼夜行
         </h1>
-        <h2 class="text-xl sm:text-3xl font-extrabold tracking-widest text-gold mt-1">
-          逢魔之刻・合璧破邪
+        <h2 class="text-xl sm:text-3xl font-extrabold tracking-widest text-gold mt-1.5">
+          逢魔結界・合璧破邪
         </h2>
-        <div class="w-56 sm:w-72 h-0.5 bg-gradient-to-r from-transparent via-[#ffd166] to-transparent mx-auto mt-3"></div>
+        <div class="w-56 sm:w-80 h-0.5 bg-gradient-to-r from-transparent via-[#ffd166] to-transparent mx-auto mt-3"></div>
       </div>
 
-      <!-- Center Lobby Mode Selection Cards -->
+      <!-- Mode Selection Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-2xl my-auto p-2">
         <!-- Create Room Card -->
         <div id="cardOpenCreateRoom" class="glass-card glass-card-hover p-6 rounded-2xl flex flex-col items-center text-center cursor-pointer transition-all duration-200 hover:-translate-y-1.5 border-gold-glow group">
-          <div class="w-16 h-16 rounded-2xl bg-amber-950/60 border border-amber-500/40 flex items-center justify-center text-3xl mb-3 group-hover:scale-110 transition-transform">
+          <div class="w-16 h-16 rounded-2xl bg-amber-950/60 border border-amber-500/40 flex items-center justify-center text-3xl mb-3 group-hover:scale-110 transition-transform shadow-inner">
             🏮
           </div>
-          <h3 class="text-xl font-bold text-gold">建立封魔祭壇</h3>
+          <h3 class="text-xl font-bold text-gold">開闢封魔祭壇 (房主)</h3>
           <p class="text-xs text-stone-300 mt-2 leading-relaxed">
-            創建全新退魔房間，身任房主領率群雄，自訂法陣名號與結界密碼。
+            創建專屬四人退魔房間，身任祭壇房主統御隊伍，自訂法陣名號與結界密碼。
           </p>
           <button class="mt-5 w-full py-2.5 bg-gradient-to-r from-red-800 via-red-600 to-amber-700 text-white font-bold rounded-xl text-sm shadow-lg tracking-wider active:scale-95 transition">
-            開闢新房間
+            開闢新祭壇
           </button>
         </div>
 
         <!-- Join Room Card -->
         <div id="cardOpenJoinRoom" class="glass-card glass-card-hover p-6 rounded-2xl flex flex-col items-center text-center cursor-pointer transition-all duration-200 hover:-translate-y-1.5 border-gold-glow group">
-          <div class="w-16 h-16 rounded-2xl bg-indigo-950/60 border border-indigo-500/40 flex items-center justify-center text-3xl mb-3 group-hover:scale-110 transition-transform">
+          <div class="w-16 h-16 rounded-2xl bg-indigo-950/60 border border-indigo-500/40 flex items-center justify-center text-3xl mb-3 group-hover:scale-110 transition-transform shadow-inner">
             🗝️
           </div>
-          <h3 class="text-xl font-bold text-amber-200">加入破邪法陣</h3>
+          <h3 class="text-xl font-bold text-amber-200">踏入現有法陣 (遊俠)</h3>
           <p class="text-xs text-stone-300 mt-2 leading-relaxed">
-            輸入 5 位房號代碼（如 A7KQ9）或瀏覽當前降魔隊伍，迅速馳援戰局。
+            輸入 5 位祭壇代碼（如 A7KQ9）或直接探尋局域/在線降魔隊伍，迅速參戰。
           </p>
           <button class="mt-5 w-full py-2.5 bg-gradient-to-r from-purple-900 via-indigo-800 to-stone-800 text-white font-bold rounded-xl text-sm shadow-lg tracking-wider active:scale-95 transition">
             輸入代碼加入
@@ -166,23 +169,26 @@
       </div>
 
       <!-- Quick Tips & Audio Toggle -->
-      <div class="w-full max-w-md flex justify-between items-center text-xs text-amber-200/60 pb-3">
-        <span>支援手機與 PC 跨標籤頁即時同步</span>
-        <button id="btnToggleAudio" class="px-3 py-1 rounded-lg bg-black/60 border border-amber-500/30 text-gold hover:bg-black transition">
-          🎵 和樂音效: <span id="audioStatusText">開啟</span>
+      <div class="w-full max-w-xl flex flex-wrap justify-between items-center text-xs text-amber-200/70 pb-3 gap-2 px-2">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>已啟用 20Hz 內插抗延遲技術 ｜ 支援多標籤頁/多裝置即時同步</span>
+        </span>
+        <button id="btnToggleAudio" class="px-3 py-1 rounded-lg bg-black/60 border border-amber-500/30 text-gold hover:bg-black transition flex items-center gap-1">
+          🎵 和風雅樂: <span id="audioStatusText" class="font-bold">開啟</span>
         </button>
       </div>
     </div>
 
     <!-- ======================================================== -->
-    <!-- MODAL: CREATE ROOM (建立房間區) -->
+    <!-- MODAL: CREATE ROOM (建立房間彈窗) -->
     <!-- ======================================================== -->
     <div id="modalCreateRoom" class="fixed inset-0 z-40 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
       <div class="glass-card w-full max-w-md p-6 rounded-2xl border-gold-glow flex flex-col gap-4">
         <div class="flex justify-between items-center border-b border-amber-500/30 pb-3">
           <div class="flex items-center gap-2">
             <span class="text-2xl">🏮</span>
-            <h3 class="text-lg font-bold text-gold">開闢封魔房間</h3>
+            <h3 class="text-lg font-bold text-gold">開闢封魔祭壇</h3>
           </div>
           <button id="btnCloseCreateModal" class="text-stone-400 hover:text-white text-2xl font-bold px-1">&times;</button>
         </div>
@@ -224,23 +230,23 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- MODAL: JOIN ROOM (加入房間區) -->
+    <!-- MODAL: JOIN ROOM (加入房間彈窗) -->
     <!-- ======================================================== -->
     <div id="modalJoinRoom" class="fixed inset-0 z-40 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
       <div class="glass-card w-full max-w-md p-6 rounded-2xl border-gold-glow flex flex-col gap-4">
         <div class="flex justify-between items-center border-b border-amber-500/30 pb-3">
           <div class="flex items-center gap-2">
             <span class="text-2xl">🗝️</span>
-            <h3 class="text-lg font-bold text-amber-200">加入破邪法陣</h3>
+            <h3 class="text-lg font-bold text-amber-200">踏入破邪法陣</h3>
           </div>
           <button id="btnCloseJoinModal" class="text-stone-400 hover:text-white text-2xl font-bold px-1">&times;</button>
         </div>
 
         <div class="flex flex-col gap-3">
           <div>
-            <label class="block text-xs text-stone-300 mb-1 font-bold">5位房間代碼 (Room Code)</label>
+            <label class="block text-xs text-stone-300 mb-1 font-bold">5 位房間代碼 (Room Code)</label>
             <input id="inputJoinCode" type="text" maxlength="5" placeholder="例如：A7KQ9"
-                   class="w-full px-3.5 py-2.5 bg-black/70 border border-amber-600/40 rounded-xl text-center text-lg uppercase tracking-widest text-amber-300 font-extrabold focus:outline-none focus:border-amber-400">
+                   class="w-full px-3.5 py-2.5 bg-black/70 border border-amber-600/40 rounded-xl text-center text-xl uppercase tracking-widest text-amber-300 font-extrabold font-mono-code focus:outline-none focus:border-amber-400">
           </div>
 
           <div>
@@ -259,11 +265,13 @@
         <!-- Discovered active rooms quick list -->
         <div>
           <div class="flex justify-between items-center text-[11px] text-stone-400 mb-1">
-            <span>現有活躍祭壇快速加入</span>
-            <button id="btnRefreshActiveRooms" class="text-amber-400 hover:underline">整理列表</button>
+            <span>現有活躍祭壇快速探測</span>
+            <button id="btnRefreshActiveRooms" class="text-amber-400 hover:underline flex items-center gap-1">
+              <span>🔄</span> 重新探測
+            </button>
           </div>
-          <div id="activeRoomList" class="max-h-32 overflow-y-auto flex flex-col gap-1.5 p-1 bg-black/50 rounded-xl border border-stone-800">
-            <!-- Dynamic room tiles inserted here -->
+          <div id="activeRoomList" class="max-h-32 overflow-y-auto flex flex-col gap-1.5 p-1.5 bg-black/60 rounded-xl border border-stone-800">
+            <!-- Dynamic room tiles -->
           </div>
         </div>
 
@@ -275,25 +283,26 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- VIEW 2: ROOM LOBBY (房間大廳) -->
+    <!-- VIEW 2: ROOM LOBBY (房間大廳：選角 + 準備 + 聊天 + 房主開戰) -->
     <!-- ======================================================== -->
     <div id="viewLobby" class="absolute inset-0 z-30 flex flex-col justify-between p-3 sm:p-5 overflow-hidden hidden">
       
-      <!-- Top Lobby Bar: Room Info & Actions -->
+      <!-- Top Lobby Bar: Room Info & Controls -->
       <div class="glass-card w-full p-3 sm:p-4 rounded-xl flex flex-wrap items-center justify-between gap-2 border-gold-glow shrink-0">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-red-950/80 border border-red-500/50 flex items-center justify-center text-xl">
+          <div class="w-10 h-10 rounded-xl bg-red-950/80 border border-red-500/50 flex items-center justify-center text-xl shadow-inner">
             ⛩️
           </div>
           <div>
             <div class="flex items-center gap-2">
               <span id="lobbyRoomName" class="font-extrabold text-sm sm:text-base text-gold tracking-wide">逢魔四人拔除陣</span>
-              <span id="lobbyHostBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-600/80 text-black font-extrabold">👑 房主</span>
+              <span id="lobbyHostBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-600/90 text-black font-extrabold shadow-sm">👑 房主</span>
               <span id="lobbyLockBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 hidden">🔒 私密</span>
+              <span id="lobbyDiffBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-red-950 border border-red-500/40 text-red-300 font-bold">普通</span>
             </div>
             <div class="text-[11px] text-stone-400 flex items-center gap-3 mt-0.5">
-              <span>房間代碼: <strong id="lobbyRoomCode" class="text-amber-300 text-xs tracking-widest font-mono select-all">A7KQ9</strong></span>
-              <button id="btnCopyCode" class="text-[10px] px-2 py-0.5 rounded bg-amber-950 hover:bg-amber-900 border border-amber-600/60 text-amber-200">
+              <span>房間代碼: <strong id="lobbyRoomCode" class="text-amber-300 text-xs tracking-widest font-mono-code font-bold select-all">A7KQ9</strong></span>
+              <button id="btnCopyCode" class="text-[10px] px-2 py-0.5 rounded bg-amber-950 hover:bg-amber-900 border border-amber-600/60 text-amber-200 active:scale-95 transition">
                 複製代碼
               </button>
             </div>
@@ -302,7 +311,7 @@
 
         <div class="flex items-center gap-2">
           <!-- Simulation helper button: Quickly inject bots for testing solo -->
-          <button id="btnSimulateTeammate" class="px-3 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/50 text-indigo-200 text-xs font-bold active:scale-95 transition flex items-center gap-1">
+          <button id="btnSimulateTeammate" class="px-3 py-1.5 rounded-lg bg-indigo-950/90 hover:bg-indigo-900 border border-indigo-500/50 text-indigo-200 text-xs font-bold active:scale-95 transition flex items-center gap-1 shadow-md">
             <span>👥</span>
             <span>召喚模擬隊友</span>
           </button>
@@ -313,47 +322,50 @@
         </div>
       </div>
 
-      <!-- Center Main: Left Character Selection Panel & Right Player Slot/Chat -->
+      <!-- Center Main: Character Selection (Left) & Player Slots / Chat (Right) -->
       <div class="flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-3 my-2 min-h-0 overflow-hidden">
         
-        <!-- Left: Character Selection Grid (7 Cols on desktop) -->
+        <!-- Left: Character Selection Grid (7 cols) -->
         <div class="lg:col-span-7 glass-card p-3 sm:p-4 rounded-xl flex flex-col gap-2.5 border-gold-glow overflow-y-auto">
           <div class="flex justify-between items-center border-b border-amber-500/20 pb-2">
             <div class="text-xs sm:text-sm font-bold text-amber-200 flex items-center gap-1.5">
               <span>🎭</span>
-              <span>退魔主角選擇 (角色不可重複)</span>
+              <span>退魔英雄選擇 (角色不可重複・點選即時鎖定)</span>
             </div>
-            <span class="text-[11px] text-stone-400">點選立即切換</span>
+            <span class="text-[11px] text-emerald-400 font-mono-code flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>同步中</span>
+            </span>
           </div>
 
           <!-- 4 Exclusive Characters Grid -->
-          <div id="characterSelectGrid" class="grid grid-cols-2 gap-2.5 flex-1">
+          <div id="characterSelectGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 flex-1">
             <!-- Dynamically populated via JS -->
           </div>
         </div>
 
-        <!-- Right: Players Roster & Lobby Chat (5 Cols on desktop) -->
+        <!-- Right: Players Roster & Chat (5 cols) -->
         <div class="lg:col-span-5 flex flex-col gap-2.5 min-h-0">
           
           <!-- Players Slots List -->
           <div class="glass-card p-3 rounded-xl flex flex-col gap-2 border-gold-glow shrink-0">
             <div class="flex justify-between items-center text-xs font-bold text-amber-200 border-b border-amber-500/20 pb-1.5">
-              <span>法陣遊俠席位 (<span id="lobbyPlayerCount">1</span>/4)</span>
-              <span id="lobbyReadyRatio" class="text-[11px] text-stone-400">準備進度: 0/1</span>
+              <span>法陣遊俠席位 (<span id="lobbyPlayerCount" class="text-gold">1</span>/4)</span>
+              <span id="lobbyReadyRatio" class="text-[11px] text-stone-400 font-mono-code">準備進度: 0/1</span>
             </div>
             <div id="playerSlotsContainer" class="flex flex-col gap-1.5">
               <!-- Dynamically populated slots -->
             </div>
           </div>
 
-          <!-- Lobby Chat & Event Log -->
+          <!-- Lobby Chat & Combat Logs -->
           <div class="glass-card p-3 rounded-xl flex-1 flex flex-col gap-2 border-gold-glow min-h-0 overflow-hidden">
             <div class="text-xs font-bold text-stone-300 flex items-center gap-1 border-b border-stone-800 pb-1">
               <span>📜</span>
-              <span>法陣密語與日誌</span>
+              <span>法陣密語與神識日誌</span>
             </div>
-            <div id="lobbyChatMessages" class="flex-1 overflow-y-auto flex flex-col gap-1.5 text-xs pr-1">
-              <!-- Chat logs populated here -->
+            <div id="lobbyChatMessages" class="flex-1 overflow-y-auto flex flex-col gap-1.5 text-xs pr-1 font-sans">
+              <!-- Chat logs -->
             </div>
             <form id="lobbyChatForm" class="flex gap-1.5 pt-1 border-t border-stone-800">
               <input id="inputChatMessage" type="text" maxlength="40" placeholder="發送密語..."
@@ -367,16 +379,16 @@
         </div>
       </div>
 
-      <!-- Bottom Action Bar: Ready Progress & Start Button -->
+      <!-- Bottom Action Bar: Ready Progress & Host Start Button -->
       <div class="glass-card w-full p-3 sm:p-4 rounded-xl flex flex-wrap items-center justify-between gap-3 border-gold-glow shrink-0">
         <!-- Progress Bar & Status Text -->
         <div class="flex-1 min-w-[200px] flex flex-col gap-1">
           <div class="flex justify-between text-xs font-bold">
             <span class="text-stone-300">法陣共鳴準備度</span>
-            <span id="readyProgressPercent" class="text-gold">0%</span>
+            <span id="readyProgressPercent" class="text-gold font-mono-code">0%</span>
           </div>
           <div class="w-full h-3 bg-black/80 rounded-full overflow-hidden border border-amber-900/60 p-0.5">
-            <div id="readyProgressBar" class="h-full bg-gradient-to-r from-red-600 via-amber-500 to-emerald-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+            <div id="readyProgressBar" class="h-full bg-gradient-to-r from-red-600 via-amber-500 to-emerald-400 rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(255,209,102,0.4)]" style="width: 0%"></div>
           </div>
         </div>
 
@@ -388,9 +400,9 @@
             <span id="readyBtnText">準備完畢</span>
           </button>
 
-          <!-- Host Start Game Button (Controlled by Host only) -->
+          <!-- Host Start Game Button (Host Only) -->
           <button id="btnStartMultiplayerGame" disabled
-                  class="px-6 py-2.5 bg-gradient-to-r from-stone-800 to-stone-700 text-stone-500 font-extrabold rounded-xl text-xs sm:text-sm border border-stone-700 shadow-md cursor-not-allowed transition flex items-center gap-1.5">
+                  class="px-6 py-2.5 bg-stone-900 text-stone-500 font-extrabold rounded-xl text-xs sm:text-sm border border-stone-800 shadow-md cursor-not-allowed transition flex items-center gap-1.5">
             <span>🔥</span>
             <span id="startBtnText">等待全員準備</span>
           </button>
@@ -404,19 +416,21 @@
     <!-- ======================================================== -->
     <div id="viewCountdown" class="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-6 hidden">
       <div class="text-center flex flex-col items-center gap-4">
-        <div class="text-sm tracking-widest text-vermilion font-black uppercase">Twilight Descent Protocol</div>
+        <div class="text-xs sm:text-sm tracking-widest text-vermilion font-black uppercase font-mono-code">
+          Anti-Lag Synchronized Descent Protocol
+        </div>
         <div id="countdownNumber" class="text-7xl sm:text-9xl font-black text-gold drop-shadow-[0_0_35px_rgba(255,209,102,0.8)] animate-countdown">
           3
         </div>
         <div id="countdownStatus" class="text-lg sm:text-2xl font-bold text-amber-200 tracking-widest mt-2">
-          四象結界展開・百鬼降臨！
+          四象結界展開・百鬼夜行降臨！
         </div>
-        <div class="w-48 h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
+        <div class="w-56 h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
       </div>
     </div>
 
     <!-- ======================================================== -->
-    <!-- VIEW 4: ACTIVE IN-GAME SCREEN (戰鬥畫面與隊友狀態) -->
+    <!-- VIEW 4: ACTIVE IN-GAME SCREEN (戰鬥畫面、隊友狀態與四象結界) -->
     <!-- ======================================================== -->
     <div id="viewGame" class="absolute inset-0 z-20 hidden">
       <!-- Active Game Canvas -->
@@ -428,37 +442,46 @@
         <div id="joystickKnob" class="absolute w-12 h-12 -ml-6 -mt-6 rounded-full bg-gradient-to-br from-red-500 to-amber-600 border border-gold pointer-events-none hidden shadow-lg"></div>
       </div>
 
-      <!-- In-Game HUD: Co-op Teammates Panel (Top Left) -->
-      <div class="absolute top-3 left-3 z-30 flex flex-col gap-2 pointer-events-none">
-        <div class="glass-card px-3 py-1.5 rounded-xl border-gold-glow flex items-center gap-3 pointer-events-auto">
-          <div class="text-xs text-amber-300 font-bold">合璧法陣</div>
-          <div id="hudTeammatesList" class="flex gap-2">
-            <!-- Teammate mini avatars populated here -->
+      <!-- In-Game HUD: Co-op Teammates Realtime Status Panel (Top Left) -->
+      <div class="absolute top-3 left-3 z-30 flex flex-col gap-2 pointer-events-none max-w-[85vw]">
+        <!-- Teammate Status Cards -->
+        <div class="glass-card px-3 py-1.5 rounded-xl border-gold-glow flex items-center gap-2.5 pointer-events-auto shadow-lg">
+          <div class="text-xs text-amber-300 font-bold flex items-center gap-1">
+            <span>⛩️</span>
+            <span>四象陣</span>
+          </div>
+          <div id="hudTeammatesList" class="flex flex-wrap gap-1.5">
+            <!-- Teammate mini cards populated via JS -->
           </div>
         </div>
         
-        <!-- Player HP -->
-        <div class="glass-card px-3 py-1.5 rounded-xl border-vermilion-glow flex items-center gap-2">
+        <!-- Local Player HP & Shield -->
+        <div class="glass-card px-3 py-1.5 rounded-xl border-vermilion-glow flex items-center gap-2 pointer-events-auto shadow-md">
           <span class="text-vermilion text-xs font-bold">命</span>
-          <div class="w-32 sm:w-48 h-2.5 bg-black/80 rounded-full overflow-hidden border border-red-950">
+          <div class="w-28 sm:w-44 h-2.5 bg-black/80 rounded-full overflow-hidden border border-red-950">
             <div id="hudPlayerHp" class="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full transition-all duration-150" style="width: 100%"></div>
           </div>
-          <span id="hudPlayerHpText" class="text-[11px] text-white font-mono">100/100</span>
+          <span id="hudPlayerHpText" class="text-[11px] text-white font-mono-code font-bold">100/100</span>
+          <span id="hudBarrierBadge" class="text-[10px] px-1.5 py-0.2 rounded bg-amber-950 border border-amber-500/40 text-gold hidden">結界護體</span>
         </div>
       </div>
 
-      <!-- Survival Clock & Kills (Top Center) -->
+      <!-- Survival Clock & Level (Top Center) -->
       <div class="absolute top-3 inset-x-0 mx-auto w-fit z-30 pointer-events-none">
-        <div class="glass-card px-4 py-1.5 rounded-xl border-gold-glow flex flex-col items-center">
-          <span class="text-[10px] text-amber-300/80 tracking-widest font-bold">逢魔時刻</span>
-          <span id="hudSurvivalTimer" class="text-lg sm:text-xl font-black text-gold tracking-widest font-mono">00:00</span>
+        <div class="glass-card px-4 py-1.5 rounded-xl border-gold-glow flex flex-col items-center shadow-lg">
+          <span class="text-[10px] text-amber-300/80 tracking-widest font-bold">逢魔之刻</span>
+          <span id="hudSurvivalTimer" class="text-lg sm:text-xl font-black text-gold tracking-widest font-mono-code">00:00</span>
         </div>
       </div>
 
       <!-- Emergency Return to Lobby Button (Top Right) -->
-      <div class="absolute top-3 right-3 z-30 pointer-events-auto">
-        <button id="btnQuitToLobby" class="px-3 py-1.5 rounded-lg bg-black/80 hover:bg-black border border-red-500/60 text-red-300 text-xs font-bold active:scale-95 transition">
-          退出法陣
+      <div class="absolute top-3 right-3 z-30 pointer-events-auto flex items-center gap-2">
+        <div class="px-2.5 py-1 rounded-lg bg-black/70 border border-amber-500/30 text-[10px] text-amber-200 font-mono-code hidden sm:flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span id="inGamePingText">12ms (極佳)</span>
+        </div>
+        <button id="btnQuitToLobby" class="px-3 py-1.5 rounded-lg bg-black/80 hover:bg-black border border-red-500/60 text-red-300 text-xs font-bold active:scale-95 transition shadow-md">
+          脫離法陣
         </button>
       </div>
 
@@ -466,9 +489,12 @@
 
   </div>
 
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT GAME & ANTI-LAG NETWORK LOGIC -->
+  <!-- ========================================================================= -->
   <script>
   // =========================================================================
-  // 1. PROCEDURAL SOUND SYNTHESIZER (WEB AUDIO API - ZERO ASSET DEPENDENCY)
+  // 1. PROCEDURAL SOUND SYNTHESIZER (WEB AUDIO API)
   // =========================================================================
   class SoundEngine {
     constructor() {
@@ -501,25 +527,29 @@
       } catch (e) {}
     }
     playUiClick() {
-      this.playTone(520, 'triangle', 0.08, 0.12);
+      this.playTone(520, 'triangle', 0.07, 0.12);
     }
     playReadySound() {
-      this.playTone(440, 'triangle', 0.1, 0.15);
-      setTimeout(() => this.playTone(660, 'triangle', 0.15, 0.18), 80);
+      this.playTone(440, 'triangle', 0.09, 0.16);
+      setTimeout(() => this.playTone(660, 'triangle', 0.14, 0.18), 70);
+    }
+    playHeroSelect() {
+      this.playTone(330, 'sine', 0.08, 0.15);
+      setTimeout(() => this.playTone(550, 'sine', 0.12, 0.18), 60);
     }
     playStartChime() {
       [330, 440, 554, 659, 880].forEach((freq, i) => {
-        setTimeout(() => this.playTone(freq, 'sine', 0.5, 0.12), i * 120);
+        setTimeout(() => this.playTone(freq, 'sine', 0.45, 0.12), i * 110);
       });
     }
     playErrorBuzz() {
-      this.playTone(180, 'sawtooth', 0.2, 0.15);
+      this.playTone(180, 'sawtooth', 0.22, 0.16);
     }
   }
   const sound = new SoundEngine();
 
   // =========================================================================
-  // 2. EXCLUSIVE 4-HERO ROSTER & PIXEL ART GENERATOR
+  // 2. EXCLUSIVE 4-HERO ROSTER & PIXEL RENDERER (GEGEGE/KITARO AESTHETIC)
   // =========================================================================
   const HERO_ROSTER = [
     {
@@ -527,20 +557,22 @@
       name: "安倍宗次",
       title: "晴明正統・陰陽生",
       weapon: "五行敕令符",
-      passive: "式神共鳴 (彈道+1)",
+      passive: "式神共鳴 (投射物+1)",
       avatarEmoji: "📜",
       themeColor: "#3b82f6",
-      desc: "追跡破邪符咒，遠程自動尋敵殲滅。"
+      desc: "自動尋敵破邪符咒，多段追蹤滅妖。",
+      colorHex: "#60a5fa"
     },
     {
       id: "CHAR_KIKYO",
       name: "白石桔梗",
-      title: "神樂巫女",
+      title: "破邪巫女",
       weapon: "神木破魔矢",
-      passive: "淨化之庭 (拾取半徑+50%)",
+      passive: "淨化之庭 (拾取範圍+50%)",
       avatarEmoji: "🏹",
       themeColor: "#ef4444",
-      desc: "高速直線穿透矢，粉碎排山倒海妖怪。"
+      desc: "穿透性破魔神矢，粉碎大群妖怪直線陣列。",
+      colorHex: "#f87171"
     },
     {
       id: "CHAR_NOBUTSUNA",
@@ -550,7 +582,8 @@
       passive: "殘心之勢 (全傷害+25%)",
       avatarEmoji: "⚔️",
       themeColor: "#f59e0b",
-      desc: "環形迴旋居合刀芒，斬碎貼身妖物。"
+      desc: "環形居合斬刀芒，瞬間切碎近身妖魔。",
+      colorHex: "#fbbf24"
     },
     {
       id: "CHAR_TAMAMO",
@@ -560,64 +593,71 @@
       passive: "天狐遁甲 (移速+15%)",
       avatarEmoji: "🔥",
       themeColor: "#c084fc",
-      desc: "環繞護體之青藍鬼火，焚灼一切近身者。"
+      desc: "環繞護體之青藍鬼火，持續灼燒一切觸碰者。",
+      colorHex: "#c084fc"
     }
   ];
 
-  // Helper to render procedural 16-bit pixel avatar to Canvas
-  function createHeroPixelCanvas(heroId, size = 48) {
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
+  function drawPixelHero(ctx, heroId, x, y, size = 32, isMoving = false, tick = 0) {
+    ctx.save();
+    ctx.translate(x, y);
     ctx.imageSmoothingEnabled = false;
-
-    const unit = size / 16;
-    const p = (col, x, y, w = 1, h = 1) => {
+    const u = size / 16;
+    const bob = isMoving ? Math.sin(tick * 10) * 1.5 : 0;
+    const p = (col, px, py, pw = 1, ph = 1) => {
       ctx.fillStyle = col;
-      ctx.fillRect(x * unit, y * unit, w * unit, h * unit);
+      ctx.fillRect((px - 8) * u, (py - 8 + bob) * u, pw * u, ph * u);
     };
 
     if (heroId === "CHAR_ABE") {
+      // Abe Souji (Kitaro vest theme)
       p("#18181b", 6, 1, 4, 3); // Hat
       p("#fed7aa", 5, 4, 6, 5); // Face
       p("#18181b", 7, 5, 1, 1); // Eye
       p("#f8fafc", 4, 9, 8, 6); // Kimono
-      p("#eab308", 4, 10, 8, 2); // Kitaro vest
-      p("#18181b", 4, 12, 8, 2);
+      p("#eab308", 4, 10, 8, 2); // Yellow stripes
+      p("#18181b", 4, 12, 8, 2); // Black stripes
+      p("#92400e", 5, 15, 2, 2); // Geta
+      p("#92400e", 9, 15, 2, 2);
     } else if (heroId === "CHAR_KIKYO") {
-      p("#18181b", 4, 2, 8, 6); // Hair
-      p("#dc2626", 6, 1, 4, 2); // Ribbon
+      // Kikyo (Shrine Maiden)
+      p("#18181b", 4, 2, 8, 5); // Long Black Hair
+      p("#dc2626", 6, 1, 4, 2); // Red Ribbon
       p("#fed7aa", 5, 4, 6, 4); // Face
-      p("#f8fafc", 4, 8, 8, 4); // White top
-      p("#b91c1c", 4, 12, 8, 4); // Red hakama
+      p("#f8fafc", 4, 8, 8, 4); // White Robe
+      p("#b91c1c", 4, 12, 8, 4); // Red Hakama
+      p("#dc2626", 12, 6, 2, 8); // Bow
     } else if (heroId === "CHAR_NOBUTSUNA") {
+      // Nobutsuna (Ronin Samurai)
       p("#92400e", 3, 2, 10, 3); // Straw Hat
-      p("#fed7aa", 5, 5, 6, 4); // Face
-      p("#1e1b4b", 4, 9, 8, 6); // Ronin Haori
-      p("#fbbf24", 2, 11, 2, 3); // Katana
+      p("#fed7aa", 5, 5, 6, 4); // Face & Beard
+      p("#1e1b4b", 4, 9, 8, 6); // Indigo Haori
+      p("#fbbf24", 2, 11, 2, 4); // Katana hilt
     } else {
-      p("#f43f5e", 4, 2, 8, 6); // Fox hair
+      // Tamamo (Fox Spirit)
+      p("#fb7185", 4, 1, 3, 3); // Fox Ear L
+      p("#fb7185", 9, 1, 3, 3); // Fox Ear R
+      p("#f43f5e", 4, 3, 8, 5); // Pink Fox Hair
       p("#fed7aa", 5, 5, 6, 4); // Face
-      p("#c084fc", 4, 9, 8, 6); // Violet robe
-      p("#38bdf8", 12, 7, 3, 3); // Fox flame
+      p("#c084fc", 4, 9, 8, 6); // Violet Robe
+      p("#38bdf8", 12, 7, 3, 3); // Floating Will-o'-wisp
     }
-    return canvas;
+    ctx.restore();
   }
 
   // =========================================================================
-  // 3. MULTIPLAYER ROOM & CROSS-TAB SYNC ENGINE (BROADCASTCHANNEL + SIMULATOR)
+  // 3. ANTI-LAG & ANTI-STUTTER MULTIPLAYER NETWORK ENGINE
   // =========================================================================
-  const MULTIPLAYER_CHANNEL_NAME = 'HYAKKI_TWILIGHT_ROOM_CHANNEL_V1';
+  const MULTIPLAYER_CHANNEL_NAME = 'HYAKKI_TWILIGHT_ROOM_CHANNEL_V2';
   let broadcastChannel = null;
 
   try {
     broadcastChannel = new BroadcastChannel(MULTIPLAYER_CHANNEL_NAME);
   } catch (e) {
-    console.warn("BroadcastChannel not supported in this environment. Falling back to local state.");
+    console.warn("BroadcastChannel not supported in this browser environment.");
   }
 
-  // Current Local Client Identity
+  // Local Client Entity
   const clientUser = {
     id: 'USR_' + Math.random().toString(36).substring(2, 9).toUpperCase(),
     name: '安倍主座',
@@ -627,10 +667,49 @@
     ping: 12
   };
 
-  // Current Active Room State Model
   let currentRoom = null;
 
-  // Generate 5-character room code (e.g. A7KQ9)
+  // Remote Teammates Interpolation Buffer (Anti-stutter)
+  class RemotePlayerProxy {
+    constructor(playerData) {
+      this.id = playerData.id;
+      this.name = playerData.name;
+      this.heroId = playerData.heroId;
+      this.hp = 100;
+      this.maxHp = 100;
+      this.isReady = playerData.isReady;
+      this.isHost = playerData.isHost;
+      this.isBot = playerData.isBot || false;
+
+      // Anti-Lag Interpolation Coordinates
+      this.x = 0;
+      this.y = 0;
+      this.targetX = 0;
+      this.targetY = 0;
+      this.vx = 0;
+      this.vy = 0;
+      this.lastPacketTime = performance.now();
+    }
+
+    receiveSnapshot(packet) {
+      this.targetX = packet.x;
+      this.targetY = packet.y;
+      this.vx = packet.vx || 0;
+      this.vy = packet.vy || 0;
+      if (packet.hp !== undefined) this.hp = packet.hp;
+      this.lastPacketTime = performance.now();
+    }
+
+    updateInterpolation(dt) {
+      // 20Hz Hermite/Lerp smooth interpolation to prevent jitter
+      const smoothingFactor = 1 - Math.exp(-22 * dt);
+      this.x += (this.targetX - this.x) * smoothingFactor;
+      this.y += (this.targetY - this.y) * smoothingFactor;
+    }
+  }
+
+  const remoteProxies = new Map();
+
   function generateRoomCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
@@ -640,38 +719,48 @@
     return code;
   }
 
-  // Broadcast out a state message to other open tabs
   function broadcastMessage(type, payload = {}) {
     if (!broadcastChannel) return;
     broadcastChannel.postMessage({
       type,
       roomId: currentRoom?.id,
       senderId: clientUser.id,
-      timestamp: Date.now(),
+      timestamp: performance.now(),
       payload
     });
   }
 
-  // Listen to remote tab events
   if (broadcastChannel) {
     broadcastChannel.onmessage = (event) => {
-      const { type, roomId, senderId, payload } = event.data || {};
-      if (!currentRoom) {
-        // Room discovery request
-        if (type === 'QUERY_ROOMS') {
-          // Respond if we are host of an active room
-          if (currentRoom && clientUser.isHost) {
-            broadcastMessage('ANNOUNCE_ROOM', { room: getSanitizedRoomInfo() });
-          }
+      const { type, roomId, senderId, timestamp, payload } = event.data || {};
+      
+      // Global Discovery Request
+      if (type === 'QUERY_ROOMS') {
+        if (currentRoom && clientUser.isHost) {
+          broadcastMessage('ANNOUNCE_ROOM', { room: getSanitizedRoomInfo() });
         }
         return;
       }
 
-      // Check if packet matches current room
-      if (roomId !== currentRoom.id) return;
-      if (senderId === clientUser.id) return; // ignore self
+      if (type === 'ANNOUNCE_ROOM' && payload?.room) {
+        addDiscoveredRoom(payload.room);
+        return;
+      }
+
+      if (!currentRoom || roomId !== currentRoom.id) return;
+      if (senderId === clientUser.id) return;
 
       switch (type) {
+        case 'PING_CHECK':
+          // Immediately reply with PONG for latency measurement
+          broadcastMessage('PONG_REPLY', { pingTime: payload.pingTime });
+          break;
+        case 'PONG_REPLY':
+          if (payload.pingTime) {
+            const rtt = Math.max(4, Math.round(performance.now() - payload.pingTime));
+            updateTelemetryDisplay(rtt);
+          }
+          break;
         case 'PLAYER_JOINED':
           handleRemotePlayerJoin(payload.player);
           break;
@@ -695,6 +784,22 @@
         case 'GAME_START_COUNTDOWN':
           triggerGameStartCountdown();
           break;
+        case 'IN_GAME_ENTITY_TICK':
+          // High frequency player positional snapshot
+          if (remoteProxies.has(senderId)) {
+            remoteProxies.get(senderId).receiveSnapshot(payload);
+          }
+          break;
+        case 'IN_GAME_SHOOT_EVENT':
+          // Remote player spawned a projectile
+          handleRemoteShootEvent(payload);
+          break;
+        case 'IN_GAME_HOST_WAVE_TICK':
+          // Non-hosts synchronize enemies from host to prevent desync
+          if (!clientUser.isHost && payload.enemies) {
+            synchronizeHostEnemies(payload.enemies);
+          }
+          break;
       }
     };
   }
@@ -708,17 +813,18 @@
       hasPassword: !!currentRoom.password,
       playerCount: currentRoom.players.length,
       maxPlayers: 4,
-      isStarted: currentRoom.isStarted
+      isStarted: currentRoom.isStarted,
+      difficulty: currentRoom.difficulty
     };
   }
 
   // =========================================================================
-  // 4. ROOM MANAGEMENT LOGIC & ACTIONS
+  // 4. ROOM MANAGEMENT LOGIC (CREATE, JOIN, SELECT, READY, START)
   // =========================================================================
   function createRoom(name, hostName, password, difficulty) {
     clientUser.name = hostName.trim() || '除妖主座';
     clientUser.isHost = true;
-    clientUser.isReady = true; // Host is default ready
+    clientUser.isReady = true; // Host is auto-ready
     clientUser.selectedHeroId = 'CHAR_ABE';
 
     const code = generateRoomCode();
@@ -741,7 +847,7 @@
       ]
     };
 
-    // Notify other tabs
+    remoteProxies.clear();
     broadcastMessage('ANNOUNCE_ROOM', { room: getSanitizedRoomInfo() });
 
     enterLobbyView();
@@ -757,19 +863,16 @@
       return;
     }
 
-    // Prepare client info
     clientUser.name = playerName.trim() || '退魔遊俠';
     clientUser.isHost = false;
     clientUser.isReady = false;
 
-    // Check if matching room exists in current tab context
-    // If not, we simulate finding or creating joined session with that code
     if (!currentRoom || currentRoom.code !== cleanCode) {
-      // Simulate remote room discovery
+      // Initialize room structure for client
       currentRoom = {
         id: 'ROOM_' + cleanCode,
         code: cleanCode,
-        name: `封魔破邪隊 (${cleanCode})`,
+        name: `逢魔除妖隊 (${cleanCode})`,
         password: null,
         difficulty: 'NORMAL',
         hostId: 'REMOTE_HOST_' + cleanCode,
@@ -777,7 +880,7 @@
         players: [
           {
             id: 'REMOTE_HOST_' + cleanCode,
-            name: '大陰陽師・清弦',
+            name: '安倍主座',
             heroId: 'CHAR_ABE',
             isReady: true,
             isHost: true
@@ -786,7 +889,6 @@
       };
     }
 
-    // Validate Room Status
     if (currentRoom.isStarted) {
       showToast('該法陣已然開戰，無法中途踏入！', 'error');
       sound.playErrorBuzz();
@@ -794,7 +896,7 @@
     }
 
     if (currentRoom.players.length >= 4) {
-      showToast('該房間人數已滿 (4/4)！', 'error');
+      showToast('該房間名額已滿 (4/4)！', 'error');
       sound.playErrorBuzz();
       return;
     }
@@ -805,11 +907,11 @@
       return;
     }
 
-    // Assign first available hero that is not taken
+    // Pick first unoccupied hero
     const takenHeroIds = currentRoom.players.map(p => p.heroId);
     const availableHero = HERO_ROSTER.find(h => !takenHeroIds.includes(h.id));
     if (!availableHero) {
-      showToast('已無法席位可供選擇！', 'error');
+      showToast('所有法席英雄皆已被佔滿！', 'error');
       return;
     }
 
@@ -824,8 +926,6 @@
     };
 
     currentRoom.players.push(newPlayer);
-
-    // Notify other tabs
     broadcastMessage('PLAYER_JOINED', { player: newPlayer });
 
     enterLobbyView();
@@ -838,11 +938,11 @@
     const exists = currentRoom.players.some(p => p.id === player.id);
     if (!exists && currentRoom.players.length < 4) {
       currentRoom.players.push(player);
+      remoteProxies.set(player.id, new RemotePlayerProxy(player));
       renderLobbyState();
-      appendChatMessage("系統", `${player.name} 加入了隊伍。`, true);
+      appendChatMessage("系統", `${player.name} 加入了法陣隊伍。`, true);
       showToast(`${player.name} 加入了房間`, 'info');
 
-      // If host, sync full room state to everyone
       if (clientUser.isHost) {
         broadcastMessage('ROOM_STATE_SYNC', { roomState: currentRoom });
       }
@@ -855,8 +955,9 @@
     if (idx !== -1) {
       const leftPlayer = currentRoom.players[idx];
       currentRoom.players.splice(idx, 1);
+      remoteProxies.delete(playerId);
       renderLobbyState();
-      appendChatMessage("系統", `${leftPlayer.name} 離開了房間。`, true);
+      appendChatMessage("系統", `${leftPlayer.name} 脫離了房間。`, true);
       showToast(`${leftPlayer.name} 離開了房間`, 'info');
     }
   }
@@ -866,6 +967,9 @@
     const player = currentRoom.players.find(p => p.id === senderId);
     if (player) {
       player.heroId = heroId;
+      if (remoteProxies.has(senderId)) {
+        remoteProxies.get(senderId).heroId = heroId;
+      }
       renderLobbyState();
       appendChatMessage("動態", `${player.name} 選擇了【${getHeroName(heroId)}】`, true);
     }
@@ -876,6 +980,9 @@
     const player = currentRoom.players.find(p => p.id === senderId);
     if (player) {
       player.isReady = isReady;
+      if (remoteProxies.has(senderId)) {
+        remoteProxies.get(senderId).isReady = isReady;
+      }
       renderLobbyState();
       appendChatMessage("動態", `${player.name} ${isReady ? '已準備就緒！' : '取消了準備。'}`, true);
     }
@@ -886,23 +993,26 @@
     currentRoom.players = remoteRoom.players;
     currentRoom.name = remoteRoom.name;
     currentRoom.difficulty = remoteRoom.difficulty;
+    currentRoom.players.forEach(p => {
+      if (p.id !== clientUser.id && !remoteProxies.has(p.id)) {
+        remoteProxies.set(p.id, new RemotePlayerProxy(p));
+      }
+    });
     renderLobbyState();
   }
 
-  // Attempt to pick a character
   function selectHero(heroId) {
     if (!currentRoom) return;
-    sound.playUiClick();
+    sound.playHeroSelect();
 
-    // Check if character is already occupied by someone else
+    // Check if character is locked by another player
     const occupant = currentRoom.players.find(p => p.heroId === heroId && p.id !== clientUser.id);
     if (occupant) {
-      showToast(`【${getHeroName(heroId)}】已被 ${occupant.name} 鎖定，不可重複！`, 'error');
+      showToast(`【${getHeroName(heroId)}】已被 ${occupant.name} 鎖定，無法重複選取！`, 'error');
       sound.playErrorBuzz();
       return;
     }
 
-    // Assign hero to local client
     clientUser.selectedHeroId = heroId;
     const localPlayerObj = currentRoom.players.find(p => p.id === clientUser.id);
     if (localPlayerObj) {
@@ -911,10 +1021,9 @@
 
     broadcastMessage('PLAYER_SELECT_HERO', { heroId });
     renderLobbyState();
-    showToast(`已切換為：${getHeroName(heroId)}`, 'success');
+    showToast(`已鎖定英雄：${getHeroName(heroId)}`, 'success');
   }
 
-  // Toggle ready status
   function toggleReady() {
     if (!currentRoom) return;
     sound.playReadySound();
@@ -929,11 +1038,10 @@
     renderLobbyState();
   }
 
-  // Host starts the game
   function requestStartGame() {
     if (!currentRoom || !clientUser.isHost) return;
 
-    // Validate that all players are ready
+    // Validate that all joined players are ready
     const unreadyPlayers = currentRoom.players.filter(p => !p.isReady);
     if (unreadyPlayers.length > 0) {
       showToast(`尚有遊俠未準備：${unreadyPlayers.map(p => p.name).join(', ')}`, 'error');
@@ -947,22 +1055,21 @@
     triggerGameStartCountdown();
   }
 
-  // Solo Tester Bot Injector (模擬隊友功能)
+  // Simulation Helper for Solo Testing
   function simulateBotTeammate() {
     if (!currentRoom) return;
     if (currentRoom.players.length >= 4) {
-      showToast('房間人數已達到上限 (4/4)！', 'info');
+      showToast('房間人數已達到 4 人上限！', 'info');
       return;
     }
 
-    const botNames = ["桔梗之侍", "浪客十兵衛", "天狐化身", "淨壇行者", "鬼眼狂刀"];
+    const botNames = ["桔梗之侍", "浪客十兵衛", "天狐化身", "淨壇行者"];
     const unusedName = botNames.find(n => !currentRoom.players.some(p => p.name === n)) || ("遊俠_" + Math.floor(Math.random() * 900 + 100));
 
-    // Find unoccupied hero
     const occupiedHeroIds = currentRoom.players.map(p => p.heroId);
     const availableHero = HERO_ROSTER.find(h => !occupiedHeroIds.includes(h.id));
     if (!availableHero) {
-      showToast('所有式神角色皆已被佔滿！', 'error');
+      showToast('所有式神英雄席位皆已被佔滿！', 'error');
       return;
     }
 
@@ -970,12 +1077,14 @@
       id: 'BOT_' + Math.random().toString(36).substring(2, 7),
       name: unusedName,
       heroId: availableHero.id,
-      isReady: true, // Bots auto-ready
+      isReady: true,
       isHost: false,
       isBot: true
     };
 
     currentRoom.players.push(botPlayer);
+    remoteProxies.set(botPlayer.id, new RemotePlayerProxy(botPlayer));
+
     renderLobbyState();
     appendChatMessage("系統", `${botPlayer.name} (AI) 響應了召集並就緒。`, true);
     showToast(`模擬隊友【${botPlayer.name}】已加入並準備完畢`, 'info');
@@ -987,7 +1096,7 @@
   }
 
   // =========================================================================
-  // 5. REACTIVE UI RENDERING (PERFORMANCE OPTIMIZED DIFFING)
+  // 5. REACTIVE UI RENDERING (LOBBY, CHAT, SLOTS)
   // =========================================================================
   function getHeroName(heroId) {
     const h = HERO_ROSTER.find(item => item.id === heroId);
@@ -997,18 +1106,18 @@
   function renderLobbyState() {
     if (!currentRoom) return;
 
-    // Room Header Badges
+    // Header Badges
     document.getElementById('lobbyRoomName').innerText = currentRoom.name;
     document.getElementById('lobbyRoomCode').innerText = currentRoom.code;
     document.getElementById('lobbyHostBadge').innerText = clientUser.isHost ? '👑 房主' : '⚔️ 遊俠';
     document.getElementById('lobbyLockBadge').classList.toggle('hidden', !currentRoom.password);
+    document.getElementById('lobbyDiffBadge').innerText = currentRoom.difficulty === 'NIGHTMARE' ? '噩夢' : currentRoom.difficulty === 'HELL' ? '修羅' : '普通';
 
-    // 1. Render Character Selection Grid
+    // 1. Character Selection Cards
     const charGrid = document.getElementById('characterSelectGrid');
     charGrid.innerHTML = '';
 
     HERO_ROSTER.forEach(hero => {
-      // Check who is using this hero
       const occupant = currentRoom.players.find(p => p.heroId === hero.id);
       const isChosenByMe = occupant && occupant.id === clientUser.id;
       const isChosenByOther = occupant && occupant.id !== clientUser.id;
@@ -1016,16 +1125,16 @@
       const card = document.createElement('div');
       card.className = `relative p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between ${
         isChosenByMe
-          ? 'bg-amber-950/80 border-amber-400 shadow-[0_0_15px_rgba(255,209,102,0.35)] scale-[1.02]'
+          ? 'bg-amber-950/85 border-amber-400 shadow-[0_0_16px_rgba(255,209,102,0.4)] scale-[1.01]'
           : isChosenByOther
-            ? 'bg-black/80 border-stone-800 opacity-60 cursor-not-allowed'
-            : 'bg-black/50 border-amber-500/20 hover:border-amber-400/60 cursor-pointer hover:-translate-y-0.5'
+            ? 'bg-black/75 border-stone-800 opacity-60 cursor-not-allowed'
+            : 'bg-black/50 border-amber-500/25 hover:border-amber-400/60 cursor-pointer hover:-translate-y-0.5'
       }`;
 
       // Card Header
       const headerHtml = `
         <div class="flex items-center gap-2">
-          <div class="w-10 h-10 rounded-lg bg-black/60 border border-stone-700 flex items-center justify-center text-xl overflow-hidden shrink-0">
+          <div class="w-10 h-10 rounded-lg bg-black/70 border border-stone-700 flex items-center justify-center text-xl shrink-0">
             ${hero.avatarEmoji}
           </div>
           <div class="min-w-0">
@@ -1035,14 +1144,14 @@
         </div>
       `;
 
-      // Status Badge or Occupation Warning
+      // Status Badge
       let statusHtml = '';
       if (isChosenByMe) {
-        statusHtml = `<div class="mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 text-center">已選擇</div>`;
+        statusHtml = `<div class="mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500 text-emerald-300 text-center font-mono-code">✓ 本人已鎖定</div>`;
       } else if (isChosenByOther) {
-        statusHtml = `<div class="mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-red-950/80 text-red-300 border border-red-800 text-center truncate">🔒 由 ${occupant.name} 鎖定</div>`;
+        statusHtml = `<div class="mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-red-950/80 border border-red-800 text-red-300 text-center truncate">🔒 由 ${occupant.name} 鎖定</div>`;
       } else {
-        statusHtml = `<div class="mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-stone-900 text-stone-400 border border-stone-800 text-center group-hover:text-amber-200">可選取</div>`;
+        statusHtml = `<div class="mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-stone-900 border border-stone-800 text-stone-400 text-center group-hover:text-amber-200">可選取</div>`;
       }
 
       // Details
@@ -1062,7 +1171,7 @@
       charGrid.appendChild(card);
     });
 
-    // 2. Render Player Slots
+    // 2. Player Roster Slots
     const slotsContainer = document.getElementById('playerSlotsContainer');
     slotsContainer.innerHTML = '';
     document.getElementById('lobbyPlayerCount').innerText = currentRoom.players.length;
@@ -1079,35 +1188,35 @@
         const heroInfo = HERO_ROSTER.find(h => h.id === p.heroId);
 
         slot.className = `p-2 rounded-xl flex items-center justify-between border ${
-          isSelf ? 'bg-amber-950/40 border-amber-500/40' : 'bg-black/50 border-stone-800'
+          isSelf ? 'bg-amber-950/45 border-amber-500/50' : 'bg-black/55 border-stone-800'
         }`;
 
         slot.innerHTML = `
           <div class="flex items-center gap-2 min-w-0">
-            <div class="w-8 h-8 rounded-lg bg-black/70 border border-stone-700 flex items-center justify-center text-base">
+            <div class="w-8 h-8 rounded-lg bg-black/80 border border-stone-700 flex items-center justify-center text-base">
               ${heroInfo ? heroInfo.avatarEmoji : '👤'}
             </div>
             <div class="truncate">
               <div class="text-xs font-bold text-white flex items-center gap-1 truncate">
                 <span>${p.name}</span>
                 ${p.isHost ? '<span class="text-[9px] px-1 rounded bg-amber-600 text-black font-extrabold">房主</span>' : ''}
-                ${isSelf ? '<span class="text-[9px] text-amber-300">(你)</span>' : ''}
+                ${isSelf ? '<span class="text-[9px] text-amber-300 font-bold">(你)</span>' : ''}
+                ${p.isBot ? '<span class="text-[9px] text-indigo-300 font-bold">(AI)</span>' : ''}
               </div>
               <div class="text-[10px] text-amber-300/80 font-serif truncate">
                 ${heroInfo ? heroInfo.name : '未選定'}
               </div>
             </div>
           </div>
-          <div class="text-[11px] font-extrabold px-2.5 py-1 rounded-full ${
+          <div class="text-[11px] font-extrabold px-2.5 py-0.8 rounded-full font-mono-code ${
             p.isReady
-              ? 'bg-emerald-950 border border-emerald-500 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+              ? 'bg-emerald-950 border border-emerald-500 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.35)]'
               : 'bg-stone-900 border border-stone-700 text-stone-400'
           }">
             ${p.isReady ? '✓ 就緒' : '整備中'}
           </div>
         `;
       } else {
-        // Empty Slot
         slot.className = 'p-2 rounded-xl flex items-center justify-between border border-dashed border-stone-800 bg-black/20 text-stone-600';
         slot.innerHTML = `
           <div class="flex items-center gap-2 text-xs">
@@ -1119,14 +1228,14 @@
       slotsContainer.appendChild(slot);
     }
 
-    // 3. Update Ready Progress Bar & Ratios
+    // 3. Ready Ratio & Progress
     const totalPlayers = currentRoom.players.length;
     const percent = Math.round((readyCount / Math.max(1, totalPlayers)) * 100);
     document.getElementById('lobbyReadyRatio').innerText = `準備進度: ${readyCount}/${totalPlayers}`;
     document.getElementById('readyProgressPercent').innerText = `${percent}%`;
     document.getElementById('readyProgressBar').style.width = `${percent}%`;
 
-    // 4. Update Ready Button state for local client
+    // 4. Update Ready Button
     const btnReady = document.getElementById('btnToggleReady');
     const readyText = document.getElementById('readyBtnText');
     const readyIcon = document.getElementById('readyBtnIcon');
@@ -1141,15 +1250,15 @@
       readyIcon.innerText = "⚡";
     }
 
-    // 5. Update Start Game Button (Host Only)
+    // 5. Host Start Game Button
     const btnStart = document.getElementById('btnStartMultiplayerGame');
     const startBtnText = document.getElementById('startBtnText');
 
     if (clientUser.isHost) {
       if (readyCount === totalPlayers && totalPlayers >= 1) {
         btnStart.disabled = false;
-        btnStart.className = "px-6 py-2.5 bg-gradient-to-r from-red-700 via-red-600 to-amber-600 hover:brightness-110 text-white font-black rounded-xl text-xs sm:text-sm border-2 border-amber-300 shadow-[0_0_20px_rgba(220,38,38,0.8)] active:scale-95 transition flex items-center gap-1.5 cursor-pointer animate-pulse";
-        startBtnText.innerText = "全體就緒・開陣破邪！";
+        btnStart.className = "px-6 py-2.5 bg-gradient-to-r from-red-700 via-red-600 to-amber-600 hover:brightness-110 text-white font-black rounded-xl text-xs sm:text-sm border-2 border-amber-300 shadow-[0_0_20px_rgba(220,38,38,0.85)] active:scale-95 transition flex items-center gap-1.5 cursor-pointer animate-pulse";
+        startBtnText.innerText = "全體就緒・開陣出征！";
       } else {
         btnStart.disabled = true;
         btnStart.className = "px-6 py-2.5 bg-stone-900 text-stone-500 font-bold rounded-xl text-xs sm:text-sm border border-stone-800 cursor-not-allowed transition flex items-center gap-1.5";
@@ -1169,7 +1278,7 @@
       msgEl.className = "text-[11px] text-amber-300/80 bg-amber-950/30 px-2 py-0.5 rounded border border-amber-900/40";
       msgEl.innerHTML = `<span>⛩️ <strong>${sender}:</strong> ${escapeHtml(text)}</span>`;
     } else {
-      msgEl.className = "text-[11px] text-stone-200 bg-black/40 px-2 py-1 rounded border border-stone-800";
+      msgEl.className = "text-[11px] text-stone-200 bg-black/50 px-2 py-1 rounded border border-stone-800";
       msgEl.innerHTML = `<span class="text-gold font-bold">${escapeHtml(sender)}:</span> <span>${escapeHtml(text)}</span>`;
     }
     chatContainer.appendChild(msgEl);
@@ -1195,14 +1304,34 @@
     setTimeout(() => {
       toast.classList.add('opacity-0', '-translate-y-2');
       setTimeout(() => toast.remove(), 300);
-    }, 2800);
+    }, 2600);
+  }
+
+  function updateTelemetryDisplay(pingMs) {
+    clientUser.ping = pingMs;
+    const syncDot = document.getElementById('syncDot');
+    const syncText = document.getElementById('syncText');
+    const inGamePing = document.getElementById('inGamePingText');
+
+    let label = '極佳';
+    let colClass = 'bg-emerald-400';
+    if (pingMs > 80) {
+      label = '延遲';
+      colClass = 'bg-red-500';
+    } else if (pingMs > 40) {
+      label = '良好';
+      colClass = 'bg-amber-400';
+    }
+
+    syncDot.className = `w-2.5 h-2.5 rounded-full ${colClass} animate-ping`;
+    syncText.innerText = `同步正常 (${pingMs}ms)`;
+    if (inGamePing) inGamePing.innerText = `${pingMs}ms (${label})`;
   }
 
   // =========================================================================
-  // 6. COUNTDOWN TRANSITION & GAME ENGINE ENTRY
+  // 6. SYNCHRONIZED COUNTDOWN & TRANSITIONS
   // =========================================================================
   function triggerGameStartCountdown() {
-    // Hide Lobby View, Open Countdown Overlay
     document.getElementById('viewLobby').classList.add('hidden');
     const viewCountdown = document.getElementById('viewCountdown');
     viewCountdown.classList.remove('hidden');
@@ -1216,26 +1345,21 @@
     const interval = setInterval(() => {
       count--;
       if (count > 0) {
-        sound.playTone(440 + (3 - count) * 110, 'triangle', 0.2, 0.2);
+        sound.playTone(440 + (3 - count) * 110, 'triangle', 0.18, 0.2);
         numEl.innerText = count;
         numEl.classList.remove('animate-countdown');
-        void numEl.offsetWidth; // Trigger reflow
+        void numEl.offsetWidth;
         numEl.classList.add('animate-countdown');
       } else if (count === 0) {
         sound.playTone(880, 'sine', 0.5, 0.25);
         numEl.innerText = "出陣！";
-        statusEl.innerText = "破邪結界全開・逢魔之刻臨！";
+        statusEl.innerText = "四象結界展開・百鬼妖陣降臨！";
       } else {
         clearInterval(interval);
         viewCountdown.classList.add('hidden');
         launchGameView();
       }
     }, 1000);
-  }
-
-  function launchGameView() {
-    document.getElementById('viewGame').classList.remove('hidden');
-    initActiveCanvasGameplay();
   }
 
   function enterLobbyView() {
@@ -1258,17 +1382,22 @@
     showToast('已返回百鬼夜行本陣', 'info');
   }
 
+  function launchGameView() {
+    document.getElementById('viewGame').classList.remove('hidden');
+    initActiveCanvasGameplay();
+  }
+
   // =========================================================================
-  // 7. IN-GAME CANVAS GAMEPLAY & MULTIPLAYER COMPANION SIMULATION
+  // 7. ACTIVE MULTIPLAYER GAMEPLAY & ANTI-LAG COMBAT ENGINE
   // =========================================================================
   let gameCanvas = null;
   let gameCtx = null;
   let gameRunning = false;
   let gameStartTime = 0;
   let gamePlayer = null;
-  let gameTeammates = [];
   let gameEnemies = [];
   let gameProjectiles = [];
+  let networkTickTimer = 0;
 
   function initActiveCanvasGameplay() {
     gameCanvas = document.getElementById('gameCanvas');
@@ -1281,31 +1410,26 @@
     window.addEventListener('resize', resizeGame);
     resizeGame();
 
-    // Populate HUD Teammates
+    // Populate HUD Teammates Cards
     const hudList = document.getElementById('hudTeammatesList');
     hudList.innerHTML = '';
 
-    gameTeammates = [];
-    currentRoom.players.forEach(p => {
-      if (p.id !== clientUser.id) {
-        // Teammate Companion Entity
-        gameTeammates.push({
-          id: p.id,
-          name: p.name,
-          heroId: p.heroId,
-          x: (Math.random() - 0.5) * 80,
-          y: (Math.random() - 0.5) * 80,
-          hp: 100,
-          maxHp: 100,
-          targetOffsetAngle: Math.random() * Math.PI * 2,
-          shootCooldown: Math.random() * 1.5
-        });
+    remoteProxies.forEach((proxy, pId) => {
+      proxy.x = (Math.random() - 0.5) * 100;
+      proxy.y = (Math.random() - 0.5) * 100;
+      proxy.targetX = proxy.x;
+      proxy.targetY = proxy.y;
 
-        const badge = document.createElement('div');
-        badge.className = "flex items-center gap-1 px-2 py-0.5 rounded-lg bg-black/60 border border-stone-700 text-xs";
-        badge.innerHTML = `<span class="text-gold font-bold">${p.name}</span> <span class="text-[10px] text-emerald-400">● 存活</span>`;
-        hudList.appendChild(badge);
-      }
+      const hero = HERO_ROSTER.find(h => h.id === proxy.heroId);
+      const card = document.createElement('div');
+      card.id = `hudTeammate_${pId}`;
+      card.className = "flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-black/70 border border-stone-700 text-xs";
+      card.innerHTML = `
+        <span>${hero ? hero.avatarEmoji : '👤'}</span>
+        <span class="font-bold text-amber-200">${proxy.name}</span>
+        <span class="text-[10px] text-emerald-400 font-mono-code font-bold">100%</span>
+      `;
+      hudList.appendChild(card);
     });
 
     gamePlayer = {
@@ -1313,105 +1437,144 @@
       y: 0,
       hp: 100,
       maxHp: 100,
-      speed: 210,
+      speed: 220,
       heroId: clientUser.selectedHeroId,
-      shootCooldown: 0.8
+      shootCooldown: 0.7,
+      resonanceActive: false
     };
 
     gameEnemies = [];
     gameProjectiles = [];
-    gameStartTime = Date.now();
+    gameStartTime = performance.now();
     gameRunning = true;
 
     requestAnimationFrame(inGameLoop);
   }
 
-  function inGameLoop() {
+  function inGameLoop(currentTime) {
     if (!gameRunning) return;
-    const now = Date.now();
     const dt = 0.016;
 
-    // Update Survival Timer
-    const elapsed = Math.floor((now - gameStartTime) / 1000);
+    // Survival Clock
+    const elapsed = Math.floor((currentTime - gameStartTime) / 1000);
     const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
     const s = String(elapsed % 60).padStart(2, '0');
     document.getElementById('hudSurvivalTimer').innerText = `${m}:${s}`;
 
-    // 1. Move Local Player via joystick input
+    // 1. Client-Side Prediction: Local Player movement responds immediately (0 lag)
     gamePlayer.x += inputVector.x * gamePlayer.speed * dt;
     gamePlayer.y += inputVector.y * gamePlayer.speed * dt;
 
-    // Auto-fire player weapon
-    gamePlayer.shootCooldown -= dt;
-    if (gamePlayer.shootCooldown <= 0 && gameEnemies.length > 0) {
-      gamePlayer.shootCooldown = 0.75;
-      const target = gameEnemies[0];
-      const ang = Math.atan2(target.y - gamePlayer.y, target.x - gamePlayer.x);
-      gameProjectiles.push({
-        x: gamePlayer.x,
-        y: gamePlayer.y,
-        vx: Math.cos(ang) * 550,
-        vy: Math.sin(ang) * 550,
-        color: '#fef08a',
-        life: 2
-      });
-      sound.playTone(550, 'triangle', 0.06, 0.08);
-    }
-
-    // 2. Move Co-op Teammates in formation around player
-    gameTeammates.forEach((tm, i) => {
-      const targetX = gamePlayer.x + Math.cos(tm.targetOffsetAngle + elapsed * 0.5) * 90;
-      const targetY = gamePlayer.y + Math.sin(tm.targetOffsetAngle + elapsed * 0.5) * 90;
-      tm.x += (targetX - tm.x) * 4 * dt;
-      tm.y += (targetY - tm.y) * 4 * dt;
-
-      // Teammate auto-fire
-      tm.shootCooldown -= dt;
-      if (tm.shootCooldown <= 0 && gameEnemies.length > 0) {
-        tm.shootCooldown = 1.0;
-        const target = gameEnemies[i % gameEnemies.length];
-        const ang = Math.atan2(target.y - tm.y, target.x - tm.x);
-        gameProjectiles.push({
-          x: tm.x,
-          y: tm.y,
-          vx: Math.cos(ang) * 500,
-          vy: Math.sin(ang) * 500,
-          color: '#38bdf8',
-          life: 2
-        });
+    // 2. High-Precision Entity Interpolation for Remote Teammates (Anti-stutter)
+    remoteProxies.forEach(proxy => {
+      proxy.updateInterpolation(dt);
+      
+      // If AI bot, simulate circular formation and firing
+      if (proxy.isBot) {
+        const offsetAng = (proxy.name.charCodeAt(0) % 6) + elapsed * 0.4;
+        proxy.targetX = gamePlayer.x + Math.cos(offsetAng) * 85;
+        proxy.targetY = gamePlayer.y + Math.sin(offsetAng) * 85;
       }
     });
 
-    // 3. Spawn Yokai
-    if (gameEnemies.length < 35 && Math.random() < 0.08) {
-      const ang = Math.random() * Math.PI * 2;
-      const dist = 450 + Math.random() * 200;
-      gameEnemies.push({
-        x: gamePlayer.x + Math.cos(ang) * dist,
-        y: gamePlayer.y + Math.sin(ang) * dist,
-        hp: 30,
-        speed: 105,
-        radius: 14
+    // 3. Four-Symbols Barrier Co-op Resonance Detection (四象法陣檢測)
+    let nearbyTeammates = 0;
+    remoteProxies.forEach(proxy => {
+      const dist = Math.hypot(proxy.x - gamePlayer.x, proxy.y - gamePlayer.y);
+      if (dist < 180) nearbyTeammates++;
+    });
+
+    gamePlayer.resonanceActive = (nearbyTeammates > 0);
+    const barrierBadge = document.getElementById('hudBarrierBadge');
+    if (gamePlayer.resonanceActive) {
+      barrierBadge.classList.remove('hidden');
+      gamePlayer.hp = Math.min(100, gamePlayer.hp + 0.8 * dt); // Resonance regenerative healing
+    } else {
+      barrierBadge.classList.add('hidden');
+    }
+
+    // 4. Auto-fire local player weapon
+    gamePlayer.shootCooldown -= dt;
+    if (gamePlayer.shootCooldown <= 0 && gameEnemies.length > 0) {
+      gamePlayer.shootCooldown = 0.72;
+      const target = gameEnemies[0];
+      const ang = Math.atan2(target.y - gamePlayer.y, target.x - gamePlayer.x);
+      
+      const proj = {
+        x: gamePlayer.x,
+        y: gamePlayer.y,
+        vx: Math.cos(ang) * 580,
+        vy: Math.sin(ang) * 580,
+        heroId: gamePlayer.heroId,
+        color: '#fef08a',
+        life: 2.2,
+        damage: 32
+      };
+      gameProjectiles.push(proj);
+      sound.playTone(560, 'triangle', 0.05, 0.07);
+
+      // Broadcast shoot event to other peers
+      broadcastMessage('IN_GAME_SHOOT_EVENT', {
+        x: gamePlayer.x,
+        y: gamePlayer.y,
+        vx: proj.vx,
+        vy: proj.vy,
+        heroId: gamePlayer.heroId
       });
     }
 
-    // 4. Update Enemies
+    // 5. Host-Authoritative Enemy Spawning & Wave Orchestration
+    if (clientUser.isHost) {
+      if (gameEnemies.length < 35 && Math.random() < 0.08) {
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 480 + Math.random() * 200;
+        gameEnemies.push({
+          id: Math.random().toString(36).substring(2, 7),
+          x: gamePlayer.x + Math.cos(ang) * dist,
+          y: gamePlayer.y + Math.sin(ang) * dist,
+          hp: 30,
+          maxHp: 30,
+          speed: 105,
+          radius: 14,
+          type: Math.random() < 0.4 ? 'KAPPA' : 'UMBRELLA'
+        });
+      }
+    }
+
+    // 6. Update Enemies
     for (let i = gameEnemies.length - 1; i >= 0; i--) {
       const e = gameEnemies[i];
-      const dx = gamePlayer.x - e.x;
-      const dy = gamePlayer.y - e.y;
-      const dist = Math.hypot(dx, dy) || 1;
+      // Move towards closest player (local or remote)
+      let closestX = gamePlayer.x;
+      let closestY = gamePlayer.y;
+      let minDist = Math.hypot(gamePlayer.x - e.x, gamePlayer.y - e.y);
+
+      remoteProxies.forEach(proxy => {
+        const d = Math.hypot(proxy.x - e.x, proxy.y - e.y);
+        if (d < minDist) {
+          minDist = d;
+          closestX = proxy.x;
+          closestY = proxy.y;
+        }
+      });
+
+      const dx = closestX - e.x;
+      const dy = closestY - e.y;
+      const dist = minDist || 1;
       e.x += (dx / dist) * e.speed * dt;
       e.y += (dy / dist) * e.speed * dt;
 
-      if (dist < e.radius + 14) {
-        gamePlayer.hp = Math.max(0, gamePlayer.hp - 10 * dt);
+      // Contact damage to local player
+      const pDist = Math.hypot(gamePlayer.x - e.x, gamePlayer.y - e.y);
+      if (pDist < e.radius + 14) {
+        const dmgReduction = gamePlayer.resonanceActive ? 0.5 : 1.0;
+        gamePlayer.hp = Math.max(0, gamePlayer.hp - 12 * dmgReduction * dt);
         document.getElementById('hudPlayerHp').style.width = `${gamePlayer.hp}%`;
         document.getElementById('hudPlayerHpText').innerText = `${Math.ceil(gamePlayer.hp)}/100`;
       }
     }
 
-    // 5. Update Projectiles
+    // 7. Update Projectiles & Collisions
     for (let i = gameProjectiles.length - 1; i >= 0; i--) {
       const p = gameProjectiles[i];
       p.x += p.vx * dt;
@@ -1420,8 +1583,8 @@
 
       for (let j = gameEnemies.length - 1; j >= 0; j--) {
         const e = gameEnemies[j];
-        if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + 8) {
-          e.hp -= 25;
+        if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + 10) {
+          e.hp -= p.damage || 30;
           p.life = 0;
           if (e.hp <= 0) gameEnemies.splice(j, 1);
           break;
@@ -1431,13 +1594,69 @@
       if (p.life <= 0) gameProjectiles.splice(i, 1);
     }
 
-    // 6. Render Frame
-    renderActiveCanvas();
+    // 8. 20Hz Network Tick Sync (Bandwidth-efficient 50ms pulse)
+    networkTickTimer += dt;
+    if (networkTickTimer >= 0.05) {
+      networkTickTimer = 0;
+      broadcastMessage('IN_GAME_ENTITY_TICK', {
+        x: gamePlayer.x,
+        y: gamePlayer.y,
+        vx: inputVector.x * gamePlayer.speed,
+        vy: inputVector.y * gamePlayer.speed,
+        hp: gamePlayer.hp
+      });
+
+      // Host transmits wave synchronization snapshot
+      if (clientUser.isHost) {
+        broadcastMessage('IN_GAME_HOST_WAVE_TICK', {
+          enemies: gameEnemies.map(e => ({ id: e.id, x: e.x, y: e.y, hp: e.hp, type: e.type }))
+        });
+      }
+    }
+
+    // 9. Render Frame
+    renderActiveCanvas(currentTime);
 
     requestAnimationFrame(inGameLoop);
   }
 
-  function renderActiveCanvas() {
+  function handleRemoteShootEvent(data) {
+    gameProjectiles.push({
+      x: data.x,
+      y: data.y,
+      vx: data.vx,
+      vy: data.vy,
+      heroId: data.heroId,
+      color: '#38bdf8',
+      life: 2.2,
+      damage: 28
+    });
+  }
+
+  function synchronizeHostEnemies(hostEnemiesList) {
+    // Non-host entity synchronization
+    gameEnemies = hostEnemiesList.map(he => {
+      const existing = gameEnemies.find(e => e.id === he.id);
+      if (existing) {
+        existing.x += (he.x - existing.x) * 0.3;
+        existing.y += (he.y - existing.y) * 0.3;
+        existing.hp = he.hp;
+        return existing;
+      }
+      return {
+        id: he.id,
+        x: he.x,
+        y: he.y,
+        hp: he.hp,
+        maxHp: 30,
+        speed: 105,
+        radius: 14,
+        type: he.type || 'UMBRELLA'
+      };
+    });
+  }
+
+  function renderActiveCanvas(currentTime) {
     const w = gameCanvas.width;
     const h = gameCanvas.height;
     gameCtx.clearRect(0, 0, w, h);
@@ -1445,12 +1664,12 @@
     const camX = gamePlayer.x - w / 2;
     const camY = gamePlayer.y - h / 2;
 
-    // Draw Tatami Cobblestone Grid
+    // Tatami Grid
     const gridSize = 80;
     const offsetX = -camX % gridSize;
     const offsetY = -camY % gridSize;
 
-    gameCtx.strokeStyle = "rgba(42, 34, 51, 0.4)";
+    gameCtx.strokeStyle = "rgba(42, 34, 55, 0.45)";
     gameCtx.lineWidth = 1;
     for (let x = offsetX; x < w; x += gridSize) {
       gameCtx.beginPath();
@@ -1465,73 +1684,102 @@
       gameCtx.stroke();
     }
 
-    // Draw Co-op Teammates
-    gameTeammates.forEach(tm => {
-      const rx = tm.x - camX;
-      const ry = tm.y - camY;
+    // Draw Co-op Four-Symbols Resonance Aura (四象結界光環)
+    if (gamePlayer.resonanceActive) {
       gameCtx.save();
-      gameCtx.fillStyle = '#38bdf8';
-      gameCtx.shadowColor = '#0284c7';
-      gameCtx.shadowBlur = 12;
+      gameCtx.strokeStyle = 'rgba(255, 209, 102, 0.4)';
+      gameCtx.lineWidth = 3;
+      gameCtx.setLineDash([8, 6]);
       gameCtx.beginPath();
-      gameCtx.arc(rx, ry, 14, 0, Math.PI * 2);
-      gameCtx.fill();
+      gameCtx.arc(w / 2, h / 2, 160, 0, Math.PI * 2);
+      gameCtx.stroke();
+      gameCtx.restore();
+    }
 
-      // Name Tag
+    // Draw Remote Teammates (Smooth interpolated coordinates)
+    remoteProxies.forEach(proxy => {
+      const rx = proxy.x - camX;
+      const ry = proxy.y - camY;
+      const isMoving = Math.hypot(proxy.vx, proxy.vy) > 10;
+      drawPixelHero(gameCtx, proxy.heroId, rx, ry, 36, isMoving, currentTime * 0.001);
+
+      // Name & HP Pill
+      gameCtx.save();
       gameCtx.fillStyle = '#ffffff';
       gameCtx.font = 'bold 11px sans-serif';
       gameCtx.textAlign = 'center';
-      gameCtx.fillText(tm.name, rx, ry - 18);
+      gameCtx.fillText(proxy.name, rx, ry - 22);
+
+      // Mini HP bar
+      gameCtx.fillStyle = 'rgba(0,0,0,0.7)';
+      gameCtx.fillRect(rx - 16, ry - 18, 32, 4);
+      gameCtx.fillStyle = '#10b981';
+      gameCtx.fillRect(rx - 16, ry - 18, (proxy.hp / 100) * 32, 4);
       gameCtx.restore();
     });
 
     // Draw Local Player
-    const px = gamePlayer.x - camX;
-    const py = gamePlayer.y - camY;
-    gameCtx.save();
-    gameCtx.fillStyle = '#f59e0b';
-    gameCtx.shadowColor = '#d97706';
-    gameCtx.shadowBlur = 16;
-    gameCtx.beginPath();
-    gameCtx.arc(px, py, 16, 0, Math.PI * 2);
-    gameCtx.fill();
+    const isMoving = Math.hypot(inputVector.x, inputVector.y) > 0.1;
+    drawPixelHero(gameCtx, gamePlayer.heroId, w / 2, h / 2, 38, isMoving, currentTime * 0.001);
 
-    gameCtx.fillStyle = '#ffffff';
+    gameCtx.save();
+    gameCtx.fillStyle = '#ffd166';
     gameCtx.font = 'bold 12px sans-serif';
     gameCtx.textAlign = 'center';
-    gameCtx.fillText(`${clientUser.name} (你)`, px, py - 20);
+    gameCtx.fillText(`${clientUser.name} (你)`, w / 2, h / 2 - 24);
     gameCtx.restore();
 
-    // Draw Enemies
+    // Draw Enemies (Karakasa / Kappa)
     gameEnemies.forEach(e => {
       const ex = e.x - camX;
       const ey = e.y - camY;
       gameCtx.save();
-      gameCtx.fillStyle = '#ef4444';
-      gameCtx.shadowColor = '#b91c1c';
-      gameCtx.shadowBlur = 10;
-      gameCtx.beginPath();
-      gameCtx.arc(ex, ey, e.radius, 0, Math.PI * 2);
-      gameCtx.fill();
+      if (e.type === 'KAPPA') {
+        gameCtx.fillStyle = '#10b981';
+        gameCtx.beginPath();
+        gameCtx.arc(ex, ey, e.radius, 0, Math.PI * 2);
+        gameCtx.fill();
+        // Beak
+        gameCtx.fillStyle = '#f59e0b';
+        gameCtx.fillRect(ex - 4, ey - 2, 8, 5);
+      } else {
+        // Karakasa Umbrella
+        gameCtx.fillStyle = '#ef4444';
+        gameCtx.beginPath();
+        gameCtx.arc(ex, ey, e.radius, Math.PI, Math.PI * 2);
+        gameCtx.closePath();
+        gameCtx.fill();
+        // Bulging eye
+        gameCtx.fillStyle = '#ffffff';
+        gameCtx.beginPath();
+        gameCtx.arc(ex, ey - 4, 4, 0, Math.PI * 2);
+        gameCtx.fill();
+        gameCtx.fillStyle = '#000000';
+        gameCtx.beginPath();
+        gameCtx.arc(ex, ey - 4, 1.5, 0, Math.PI * 2);
+        gameCtx.fill();
+      }
       gameCtx.restore();
     });
 
     // Draw Projectiles
     gameProjectiles.forEach(p => {
+      const px = p.x - camX;
+      const py = p.y - camY;
       gameCtx.save();
       gameCtx.fillStyle = p.color;
       gameCtx.shadowColor = p.color;
       gameCtx.shadowBlur = 8;
       gameCtx.beginPath();
-      gameCtx.arc(p.x - camX, p.y - camY, 5, 0, Math.PI * 2);
+      gameCtx.arc(px, py, 5.5, 0, Math.PI * 2);
       gameCtx.fill();
       gameCtx.restore();
     });
 
-    // Twilight Vignette
-    const grad = gameCtx.createRadialGradient(w / 2, h / 2, w * 0.3, w / 2, h / 2, w * 0.7);
+    // Twilight Vignette overlay
+    const grad = gameCtx.createRadialGradient(w / 2, h / 2, w * 0.3, w / 2, h / 2, w * 0.72);
     grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(1, 'rgba(80, 10, 20, 0.45)');
+    grad.addColorStop(1, 'rgba(60, 10, 25, 0.42)');
     gameCtx.fillStyle = grad;
     gameCtx.fillRect(0, 0, w, h);
   }
@@ -1598,7 +1846,7 @@
         const dx = touch.clientX - touchStart.x;
         const dy = touch.clientY - touchStart.y;
         const dist = Math.hypot(dx, dy);
-        const maxDist = 50;
+        const maxDist = 48;
         const nx = dist > 0 ? dx / dist : 0;
         const ny = dist > 0 ? dy / dist : 0;
         const clampedDist = Math.min(dist, maxDist);
@@ -1606,7 +1854,7 @@
         joystickKnob.style.left = `${touchStart.x + nx * clampedDist}px`;
         joystickKnob.style.top = `${touchStart.y + ny * clampedDist}px`;
 
-        if (dist > 8) {
+        if (dist > 6) {
           inputVector.x = nx;
           inputVector.y = ny;
         } else {
@@ -1629,12 +1877,11 @@
   joystickZone.addEventListener('touchend', endJoystickTouch);
   joystickZone.addEventListener('touchcancel', endJoystickTouch);
 
-  // Navigation & Button Bindings
+  // Modal Triggers
   document.getElementById('cardOpenCreateRoom').addEventListener('click', () => {
     sound.playUiClick();
     document.getElementById('modalCreateRoom').classList.remove('hidden');
   });
-
   document.getElementById('btnCloseCreateModal').addEventListener('click', () => {
     document.getElementById('modalCreateRoom').classList.add('hidden');
   });
@@ -1642,14 +1889,14 @@
   document.getElementById('cardOpenJoinRoom').addEventListener('click', () => {
     sound.playUiClick();
     document.getElementById('modalJoinRoom').classList.remove('hidden');
+    broadcastMessage('QUERY_ROOMS');
     populateSampleActiveRooms();
   });
-
   document.getElementById('btnCloseJoinModal').addEventListener('click', () => {
     document.getElementById('modalJoinRoom').classList.add('hidden');
   });
 
-  // Difficulty switch
+  // Difficulty Toggle
   let selectedDiff = "NORMAL";
   document.querySelectorAll('.btn-diff-select').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1663,7 +1910,7 @@
     });
   });
 
-  // Submit Create Room Form
+  // Create Room Submission
   document.getElementById('btnSubmitCreateRoom').addEventListener('click', () => {
     sound.playUiClick();
     const rName = document.getElementById('inputRoomName').value;
@@ -1672,7 +1919,7 @@
     createRoom(rName, pName, pwd, selectedDiff);
   });
 
-  // Submit Join Room Form
+  // Join Room Submission
   document.getElementById('btnSubmitJoinRoom').addEventListener('click', () => {
     sound.playUiClick();
     const code = document.getElementById('inputJoinCode').value;
@@ -1681,7 +1928,7 @@
     joinRoomByCode(code, pName, pwd);
   });
 
-  // Lobby Action Buttons
+  // Lobby Bindings
   document.getElementById('btnToggleReady').addEventListener('click', toggleReady);
   document.getElementById('btnStartMultiplayerGame').addEventListener('click', requestStartGame);
   document.getElementById('btnSimulateTeammate').addEventListener('click', simulateBotTeammate);
@@ -1691,7 +1938,7 @@
     leaveRoomToHub();
   });
 
-  // Copy Room Code Helper
+  // Copy Code
   document.getElementById('btnCopyCode').addEventListener('click', () => {
     if (!currentRoom) return;
     const textToCopy = currentRoom.code;
@@ -1706,7 +1953,7 @@
     document.body.removeChild(tempInput);
   });
 
-  // Lobby Chat Message Send
+  // Lobby Chat Send
   document.getElementById('lobbyChatForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const input = document.getElementById('inputChatMessage');
@@ -1724,26 +1971,31 @@
     document.getElementById('audioStatusText').innerText = sound.enabled ? '開啟' : '靜音';
   });
 
-  // Sample Active Rooms Populator
-  function populateSampleActiveRooms() {
+  const discoveredRooms = new Map();
+  function addDiscoveredRoom(room) {
+    discoveredRooms.set(room.code, room);
+    refreshDiscoveredRoomTiles();
+  }
+
+  function refreshDiscoveredRoomTiles() {
     const list = document.getElementById('activeRoomList');
     list.innerHTML = '';
 
-    const samples = [
-      { name: "伏見千本鳥居隊", code: "A7KQ9", count: "2/4", diff: "普通" },
-      { name: "羅生門修羅拔除", code: "H9R2M", count: "3/4", diff: "噩夢" }
-    ];
+    if (discoveredRooms.size === 0) {
+      list.innerHTML = '<div class="text-[11px] text-stone-500 text-center py-2">尚未探測到活躍法陣，可直接輸入代碼或自行開闢</div>';
+      return;
+    }
 
-    samples.forEach(item => {
+    discoveredRooms.forEach(item => {
       const tile = document.createElement('div');
       tile.className = "flex items-center justify-between p-2 rounded-lg bg-black/70 hover:bg-amber-950/40 border border-stone-800 hover:border-amber-500/50 cursor-pointer transition";
       tile.innerHTML = `
         <div>
           <div class="text-xs font-bold text-amber-200">${item.name}</div>
-          <div class="text-[10px] text-stone-400 font-mono">房號: <strong class="text-gold">${item.code}</strong> ｜ ${item.diff}</div>
+          <div class="text-[10px] text-stone-400 font-mono-code">代碼: <strong class="text-gold">${item.code}</strong> ｜ ${item.difficulty === 'NIGHTMARE' ? '噩夢' : '普通'}</div>
         </div>
         <div class="text-right">
-          <span class="text-[10px] px-2 py-0.5 rounded bg-stone-800 text-stone-300">${item.count}</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-stone-800 text-stone-300 font-mono-code">${item.playerCount}/${item.maxPlayers}</span>
         </div>
       `;
       tile.addEventListener('click', () => {
@@ -1753,17 +2005,31 @@
       list.appendChild(tile);
     });
   }
-  document.getElementById('btnRefreshActiveRooms').addEventListener('click', populateSampleActiveRooms);
 
-  // Ping & Sync Indicator Simulator
+  function populateSampleActiveRooms() {
+    if (discoveredRooms.size === 0) {
+      addDiscoveredRoom({ name: "千本鳥居除妖隊", code: "A7KQ9", playerCount: 2, maxPlayers: 4, difficulty: "NORMAL" });
+      addDiscoveredRoom({ name: "羅生門修羅拔除", code: "H9R2M", playerCount: 3, maxPlayers: 4, difficulty: "NIGHTMARE" });
+    }
+  }
+
+  document.getElementById('btnRefreshActiveRooms').addEventListener('click', () => {
+    broadcastMessage('QUERY_ROOMS');
+    showToast('已發送法陣探測波...', 'info');
+  });
+
+  // Periodic Telemetry Ping-Pong (Every 2 seconds)
   setInterval(() => {
-    const syncDot = document.getElementById('syncDot');
-    const syncText = document.getElementById('syncText');
-    const ping = Math.floor(8 + Math.random() * 14);
-    syncText.innerText = `同步中 (${ping}ms)`;
-  }, 3500);
+    if (broadcastChannel && currentRoom) {
+      broadcastMessage('PING_CHECK', { pingTime: performance.now() });
+    } else {
+      // Local fallback RTT oscillation simulation
+      const simulatedPing = Math.floor(10 + Math.random() * 12);
+      updateTelemetryDisplay(simulatedPing);
+    }
+  }, 2200);
 
-  // Auto-init audio on first gesture
+  // Audio Context unlock on first interaction
   window.addEventListener('click', () => sound.init(), { once: true });
   window.addEventListener('touchstart', () => sound.init(), { once: true });
   </script>
